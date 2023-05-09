@@ -1,0 +1,15 @@
+
+var digits = "0123456789";
+var idChars = "qwertyuiopasdfghjklzxcvbnm0123456789"
+
+function isDigit(c) {
+    for(d in digits):
+        if c == d: return true;
+    return false;
+}
+
+function isIdentifier(c) {
+    for(d in idChars):
+        if c == d: return true;
+    return false;
+}

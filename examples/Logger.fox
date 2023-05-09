@@ -1,0 +1,20 @@
+library standard;
+
+class Logger {
+    static var prefix = null, suffix = null;
+
+    static function setPrefix(prefix): Logger.prefix = prefix;
+    static function setSuffix(suffix): Logger.suffix = suffix;
+
+    static function build(str) {
+        return (prefix?prefix:"") + str + (suffix?suffix:"");
+    }
+
+    static function println(str) {
+        print(build(str));
+    }
+}
+
+Logger.setPrefix("> ");
+Logger.setSuffix(" <");
+Logger.println("hello");

@@ -1,0 +1,17 @@
+library standard;
+
+class ClassTest {
+	constructor() {
+        print("No argument");
+    }
+
+    constructor(a) {
+        print("1 argument");
+    }
+
+    constructor(a, b) {
+        print("2 argument");
+    }
+}
+
+new ClassTest(1, 2);

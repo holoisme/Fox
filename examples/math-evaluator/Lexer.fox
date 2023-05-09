@@ -1,0 +1,55 @@
+library standard;
+
+import "Token.fox";
+import "Utils.fox";
+
+class Lexer {
+    static function lex(text) {
+        var tokens = [];
+        
+        for(var index = 0; index < text.length(); index++) {
+            var c = text.charAt(index);
+
+            if c == ' ' or c == '\n': continue;
+
+            if c == '+' or c == '-' or c == '*' or c == '/': tokens.add(Token.fromOperator(c))
+            
+            else if c == '(': tokens.add(new Token('(', TokenType.LPAR));
+            else if c == ')': tokens.add(new Token(')', TokenType.RPAR));
+            else if c == '[': tokens.add(new Token('[', TokenType.LPAR));
+            else if c == ']': tokens.add(new Token(']', TokenType.RPAR));
+
+            else if isDigit(c) {
+                var num = c;
+                index++;
+                for(; index < text.length(); index++) {
+                    var c2 = text.charAt(index);
+
+                    if isDigit(c2): num += c2;
+                    else: break;
+                }
+                index--;
+
+                tokens.add(new Token((int) num, TokenType.NUMBER));
+            } else if isIdentifier(c) {
+                var id = c;
+
+                index++;
+                for(; index < text.length(); index++) {
+                    var c2 = text.charAt(index);
+
+                    if isIdentifier(c2): id += c2;
+                    else: break;
+                }
+                index--;
+
+                tokens.add(new Token(id, TokenType.IDENTIFIER));
+            }
+            
+        }
+
+        tokens.add(new Token(TokenType.EOF));
+
+        return tokens;
+    }
+}

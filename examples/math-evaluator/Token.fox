@@ -1,0 +1,28 @@
+enum TokenType {
+    PLUS('+'), MINUS('-'), MULTIPLY('*'), DIVIDE('/'),
+    LPAR('('), RPAR(')'), NUMBER('number'),
+    IDENTIFIER('id'), EOF('eof');
+
+    constructor(symbol): this.symbol = symbol;
+}
+
+class Token {
+    var content, type;
+
+    constructor(type) {
+        this.content = type;
+        this.type = type;
+    }
+
+    constructor(content, type) {
+        this.content = content;
+        this.type = type;
+    }
+
+    function is(type): this.type == type;
+    function isANumber(): this.type == TokenType.NUMBER;
+
+    static function fromOperator(c):
+        if c == '+': new Token(c, TokenType.PLUS) else if c == '-': new Token('-', TokenType.MINUS)
+        else if c == '*': new Token('*', TokenType.MULTIPLY) else if c = '/': new Token('/', TokenType.DIVIDE);
+}

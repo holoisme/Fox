@@ -1,0 +1,14 @@
+library standard;
+
+import "Lexer.fox";
+import "Parser.fox";
+import "Map.fox";
+
+var varMap = new Map();
+varMap.put('a', 12);
+varMap.put('b', 20);
+
+var tokens = Lexer.lex("b + 20 * 5 - (a * b)");
+var result = (new Parser(tokens, vars)).parse();
+
+print(result);
