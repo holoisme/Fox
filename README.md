@@ -1,7 +1,7 @@
 # Fox: A fast and beginner-friendly programming language.
 <p align="center">
   <a href="https://github.com/HoloInJava/Fox">
-    <img src="https://github.com/HoloInJava/Fox/assets/77677018/5df00ff4-d88e-4182-b0b9-ac7781b1ff66" width="256">
+    <img src="https://github.com/HoloInJava/Fox/assets/77677018/5df00ff4-d88e-4182-b0b9-ac7781b1ff66" width="220">
   </a>
 </p>
 <p align="center">
@@ -10,12 +10,12 @@
   </i>
 </p>
 
-# Overview
-[**Fox**](https://github.com/HoloInJava/Fox) is a **simple** yet fully fletched programming language, with **beginner-friendly syntax** and a **transparent API** with Java. <br>
+## Overview
+[**Fox**](https://github.com/HoloInJava/Fox) is a **simple** yet fully fletched programming language, with **beginner-friendly syntax** and a **transparent API** with Java. <br><br>
 If your user has to write some code in your Java software (e.g. Game engine, or mod support), it can be quite a challenge to make it work properly without bloating your code or reinventing the wheel; and **reinventing the wheel we did**. 🦊<br>
 Offering you an **extremly easy way** to connect your already existing project to Fox, it offers what we call a [*transparent API*](https://github.com/HoloInJava/Fox) (see below) 🔥
 
-## A quick sample
+### A quick sample
 ```javascript
 
 var name = "John Doe";
@@ -54,3 +54,40 @@ enum TokenType {
   constructor(symbol): this.symbol = symbol;
 }
 ```
+
+### Java API
+Let's say you want to include the following **Java** class into the Fox environnement, this is how we proceed :
+```java
+class Player {
+  private String name;
+  private float damage;
+  
+  public Player(String name) {
+    this.name = name;
+  }
+  
+  public void setDamage(float damage) { this.damage = damage; }
+  
+  public void present() {
+    System.out.println("My name is " + name + " and I do " + damage + " of damage ! Rwar!");
+  }
+  
+  @FoxIgnore // This will assure that Fox doesn't access this
+  public void someSensitiveContent() {
+    /* bip boop boop */
+  }
+}
+```
+We can simply add the following line :
+```java
+interpreter.includeClass(Player.class);
+```
+And you're done !<br>
+Your end-users have now full access to that class from the Fox scripts :
+```javascript
+var p = new Player("John");
+p.setDamage(12.5);
+p.present();
+```
+The real point of this thing is that it is an interpreted programming language, meaning that everything happens in runtime,
+which is perfect for Game Engines, mod support, sandboxes etc. 
