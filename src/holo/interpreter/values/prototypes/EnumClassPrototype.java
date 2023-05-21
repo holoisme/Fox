@@ -18,7 +18,7 @@ public class EnumClassPrototype {
 		});
 		
 		PROTOTYPE.addFunction("length", (self, runtime, args) -> {
-			return runtime.buffer(new IntegerValue(self.getEntries().size()));
+			return runtime.buffer(IntegerValue.get(self.getEntries().size()));
 		});
 	}
 	
