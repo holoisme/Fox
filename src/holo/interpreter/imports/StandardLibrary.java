@@ -19,7 +19,7 @@ public class StandardLibrary implements Library {
 		}));
 		
 		fileContext.addBuiltInFunction(new BuiltInFunctionValue("time", (host, context, interpreter, onGoingRuntime, args) -> {
-			return onGoingRuntime.buffer(new IntegerValue((int) System.currentTimeMillis()));
+			return onGoingRuntime.buffer(IntegerValue.get((int) System.currentTimeMillis()));
 		}));
 	}
 
