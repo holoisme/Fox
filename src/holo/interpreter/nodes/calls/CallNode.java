@@ -11,8 +11,8 @@ import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.var.VarPointAccessNode;
 import holo.interpreter.values.Value;
+import holo.interpreter.values.interfaces.ICallHandler;
 import holo.interpreter.values.interfaces.ICallable;
-import holo.interpreter.values.portal.FoxPortalWrapper;
 import holo.lang.lexer.Sequence;
 
 public record CallNode(Node access, Node[] args, Sequence sequence) implements Node {
@@ -35,7 +35,7 @@ public record CallNode(Node access, Node[] args, Sequence sequence) implements N
 			hostValue = onGoingRuntime.register(pointAccess.access().interpret(parentContext, interpreter, onGoingRuntime), pointAccess.access().sequence());
 			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
 			
-			if(hostValue instanceof FoxPortalWrapper wrapper)
+			if(hostValue instanceof ICallHandler wrapper)
 				return handleFoxPortalWrapper(wrapper, pointAccess.varName(), argsValues, parentContext, interpreter, onGoingRuntime);
 			
 			accessValue = hostValue.pointGet(pointAccess.varName());
@@ -58,7 +58,7 @@ public record CallNode(Node access, Node[] args, Sequence sequence) implements N
 		} else return onGoingRuntime.failure(new CannotCallError(accessValue.typeName(), access.sequence()));
 	}
 	
-	private RuntimeResult handleFoxPortalWrapper(FoxPortalWrapper wrapper, String methodName, Value[] args, Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
+	private RuntimeResult handleFoxPortalWrapper(ICallHandler wrapper, String methodName, Value[] args, Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
 		Value value = onGoingRuntime.register(wrapper.callMethod(onGoingRuntime, methodName, args), sequence);
 		if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
 		
