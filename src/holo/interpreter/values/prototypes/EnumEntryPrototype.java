@@ -16,7 +16,7 @@ public class EnumEntryPrototype {
 		});
 		
 		PROTOTYPE.addFunction("ordinal", (self, runtime, args) -> {
-			return runtime.buffer(new IntegerValue(self.ordinal()));
+			return runtime.buffer(IntegerValue.get(self.ordinal()));
 		});
 	}
 	
