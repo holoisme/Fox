@@ -31,7 +31,7 @@ public class BooleanValue implements Value {
 		else if(operation == BinaryOperationType.OR)
 			return get(value || right.isTrue());
 		
-		return null;
+		return Value.super.binaryOperation(operation, right);
 	}
 	
 	@Override
