@@ -14,7 +14,7 @@ public record IntegerNode(int value, Sequence sequence) implements Node {
 	}
 	
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		return onGoingRuntime.buffer(new IntegerValue(value));
+		return onGoingRuntime.buffer(IntegerValue.get(value));
 	}
 	
 }
