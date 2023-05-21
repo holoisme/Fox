@@ -15,6 +15,7 @@ public class Lexer {
 	public static final String DIGITS = "0123456789";
 	public static final String STARTING_IDENTIFIER_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_";
 	public static final String IDENTIFIER_CHARS = STARTING_IDENTIFIER_CHARS + DIGITS;
+	public static final String HEX_CHARS = DIGITS + "abcdefABCDEF";
 	
 	private static final Map<Character, String> STRING_ESCAPE_CHARS = Map.ofEntries(Map.entry('n', "\n"), Map.entry('t', "\t"), Map.entry('\\', "\\"));
 	
@@ -138,6 +139,51 @@ public class Lexer {
 	}
 	
 	private static int buildNumber(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
+		
+		if(index < chars.length - 2 && chars[index] == '0') {
+			if(chars[index + 1] == 'b') {
+				index += 2;
+				String bits = "";
+				for(; index < chars.length; index++) {
+					if(chars[index] == '0' || chars[index] == '1') bits += chars[index];
+					else break;
+				}
+				index--;
+				if(bits.length() <= 32) { // creating an int
+					int result = 0;
+					for(int i = 0; i < bits.length(); i++) {
+						result <<= 1;
+						
+						if(bits.charAt(i) == '1')
+							result |= 1;
+					}
+					tokens.add(new Token(result + "", TokenType.INTEGER, Sequence.from(line, row, bits.length() + 2, fileName)));
+				} else { // creating a long
+					long result = 0;
+					for(int i = 0; i < bits.length(); i++) {
+						result <<= 1;
+						
+						if(bits.charAt(i) == '1')
+							result |= 1;
+					}
+					tokens.add(new Token(result + "", TokenType.LONG, Sequence.from(line, row, bits.length() + 2, fileName)));
+				}
+				return index;
+			} else if(chars[index + 1] == 'x') {
+				index += 2;
+				String hex = "";
+				for(; index < chars.length; index++) {
+					if(HEX_CHARS.contains(chars[index]+"")) hex += chars[index];
+					else break;
+				}
+				index--;
+				
+				int result = Integer.parseInt(hex, 16);
+				tokens.add(new Token(result + "", TokenType.INTEGER, Sequence.from(line, row, hex.length() + 2, fileName)));
+				return index;
+			}
+		}
+		
 		return buildNumber(index, chars, line, row, fileName, tokens, "", false);
 	}
 	
@@ -165,9 +211,10 @@ public class Lexer {
 			if(next == 'f' || next == 'F') {
 				index++;
 				type = TokenType.FLOAT;
-			}
-			
-			if(!hasAPoint && (next == 'l' || next == 'L')) {
+			} else if(next == 'd' || next == 'D') {
+				index++;
+				type = TokenType.FLOAT;
+			} else if(!hasAPoint && (next == 'l' || next == 'L')) {
 				index++;
 				type = TokenType.LONG;
 			}
