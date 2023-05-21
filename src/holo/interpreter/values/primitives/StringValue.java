@@ -33,7 +33,7 @@ public class StringValue implements Value, IIterable {
 	public Value castInto(CastingType type) {
 		try {
 			if(type == CastingType.INTEGER)
-				return new IntegerValue(Integer.parseInt(value));
+				return IntegerValue.get(Integer.parseInt(value));
 			else if(type == CastingType.FLOAT)
 				return new FloatValue(Float.parseFloat(value));
 			else if(type == CastingType.BOOLEAN)
@@ -55,26 +55,24 @@ public class StringValue implements Value, IIterable {
 
 	@Override
 	public Value pointGet(String key) {
-		// TODO Auto-generated method stub
 		return StringPrototype.PROTOTYPE.get(key);
 	}
 
 	@Override
 	public Value pointSet(String key, Value value) {
-		// TODO Auto-generated method stub
-		return NULL;
+		return null;
 	}
 
 	@Override
 	public Value arrayGet(Value key) {
-		// TODO Auto-generated method stub
-		return NULL;
+		if(key instanceof INumber num && num.isInteger())
+			return new CharValue(value.charAt(num.getInteger()));
+		return null;
 	}
 
 	@Override
 	public Value arraySet(Value key, Value value) {
-		// TODO Auto-generated method stub
-		return NULL;
+		return null;
 	}
 	
 	public String typeName() { return "string"; }
