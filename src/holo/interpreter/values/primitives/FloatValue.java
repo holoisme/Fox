@@ -17,13 +17,9 @@ public class FloatValue implements Value, INumber {
 		this.value = value;
 	}
 	
-	public FloatValue(double value) {
-		this.value = (float) value;
-	}
-	
 	public float getValue() { return value; }
 	
-	public String toString() { return value+""; }
+	public String toString() { return value+"f"; }
 
 	@Override
 	public boolean isTrue() {
@@ -39,31 +35,39 @@ public class FloatValue implements Value, INumber {
 			return BooleanValue.get(isTrue() && right.isTrue());
 		else if(operation == BinaryOperationType.OR)
 			return BooleanValue.get(isTrue() || right.isTrue());
-		else if(operation == BinaryOperationType.PLUS && right instanceof INumber num)
-			return new FloatValue(value + num.getFloat());
-		else if(operation == BinaryOperationType.MINUS && right instanceof INumber num)
-			return new FloatValue(value - num.getFloat());
-		else if(operation == BinaryOperationType.MULTIPLY && right instanceof INumber num)
-			return new FloatValue(value * num.getFloat());
-		else if(operation == BinaryOperationType.DIVIDE && right instanceof INumber num)
-			return new FloatValue(value / num.getFloat());
-		else if(operation == BinaryOperationType.EXPONANT && right instanceof INumber num)
-			return new FloatValue((float) Math.pow(value, num.getFloat()));
-		else if(operation == BinaryOperationType.MODULO && right instanceof INumber num)
-			return new FloatValue(value % num.getFloat());
 		
-		else if(operation == BinaryOperationType.DOUBLE_EQUALS && right instanceof INumber num)
-			return BooleanValue.get(Math.abs(value - num.getFloat()) <= FLOAT_PRECISION_EPSILON);
-		else if(operation == BinaryOperationType.NOT_EQUAL && right instanceof INumber num)
-			return BooleanValue.get(Math.abs(value - num.getFloat()) > FLOAT_PRECISION_EPSILON);
-		else if(operation == BinaryOperationType.LESS_THAN && right instanceof INumber num)
-			return BooleanValue.get(value < num.getFloat());
-		else if(operation == BinaryOperationType.GREATER_THAN && right instanceof INumber num)
-			return BooleanValue.get(value > num.getFloat());
-		else if(operation == BinaryOperationType.LESS_OR_EQUAL && right instanceof INumber num)
-			return BooleanValue.get(value <= num.getFloat());
-		else if(operation == BinaryOperationType.GREATER_OR_EQUAL && right instanceof INumber num)
-			return BooleanValue.get(value >= num.getFloat());
+		if(right instanceof INumber num) {
+			switch (operation) {
+				case PLUS:
+					return num.isDouble() ? new DoubleValue(value + num.getDouble()) : new FloatValue(value + num.getFloat());
+				case MINUS:
+					return num.isDouble() ? new DoubleValue(value - num.getDouble()) : new FloatValue(value - num.getFloat());
+				case MULTIPLY:
+					return num.isDouble() ? new DoubleValue(value * num.getDouble()) : new FloatValue(value * num.getFloat());
+				case DIVIDE:
+					return num.isDouble() ? new DoubleValue(value / num.getDouble()) : new FloatValue(value / num.getFloat());
+				case EXPONANT:
+					return num.isDouble() ? new DoubleValue(Math.pow(value, num.getDouble())) : new FloatValue((float) Math.pow(value, num.getFloat()));
+				case MODULO:
+					return num.isDouble() ? new DoubleValue(value % num.getDouble()) : new FloatValue(value % num.getFloat());
+				
+				case DOUBLE_EQUALS:
+					return BooleanValue.get(Math.abs(value - num.getFloat()) <= FLOAT_PRECISION_EPSILON);
+				case NOT_EQUAL:
+					return BooleanValue.get(Math.abs(value - num.getFloat()) > FLOAT_PRECISION_EPSILON);
+				case LESS_THAN:
+					return BooleanValue.get(value < num.getFloat());
+				case GREATER_THAN:
+					return BooleanValue.get(value > num.getFloat());
+				case LESS_OR_EQUAL:
+					return BooleanValue.get(value <= num.getFloat());
+				case GREATER_OR_EQUAL:
+					return BooleanValue.get(value >= num.getFloat());
+	
+				default: break;
+			}
+			
+		}
 		
 		return null;
 	}
@@ -79,46 +83,40 @@ public class FloatValue implements Value, INumber {
 	
 	@Override
 	public boolean equalTo(Value other) {
-		if(other instanceof FloatValue fv)
-			return Math.abs(value - fv.value) <= FLOAT_PRECISION_EPSILON;
-		else if(other instanceof IntegerValue iv)
-			return Math.abs(value - iv.getValue()) < FLOAT_PRECISION_EPSILON;
+		if(other instanceof INumber num)
+			return Math.abs(value - num.getFloat()) <= FLOAT_PRECISION_EPSILON;
 		
 		return false;
 	}
 	
 	public Value castInto(CastingType type) {
 		if(type == CastingType.INTEGER)
-			return new IntegerValue((int)value);
+			return IntegerValue.get((int)value);
 		else if(type == CastingType.FLOAT)
 			return this;
-		else if(type == CastingType.BOOLEAN)
-			return BooleanValue.get(isTrue());
+		else if(type == CastingType.DOUBLE)
+			return new DoubleValue(value);
 		
 		return Value.super.castInto(type);
 	}
 
 	@Override
 	public Value pointGet(String key) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Value pointSet(String key, Value value) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Value arrayGet(Value key) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Value arraySet(Value key, Value value) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
@@ -134,7 +132,22 @@ public class FloatValue implements Value, INumber {
 		return value;
 	}
 	
+	@Override
+	public double getDouble() {
+		return value;
+	}
+	
 	public Object toJavaObject() { return value; }
 	public Class<?> toJavaClass(Object selfObject) { return float.class; }
+	
+	@Override
+	public NumberType numberType() {
+		return NumberType.FLOAT;
+	}
+
+	@Override
+	public boolean isInteger() {
+		return false;
+	}
 	
 }
