@@ -10,6 +10,8 @@ import holo.interpreter.types.UnaryOperationType;
 import holo.interpreter.values.portal.FoxPortal;
 import holo.interpreter.values.portal.FoxPortalWrapper;
 import holo.interpreter.values.primitives.BooleanValue;
+import holo.interpreter.values.primitives.CharValue;
+import holo.interpreter.values.primitives.DoubleValue;
 import holo.interpreter.values.primitives.FloatValue;
 import holo.interpreter.values.primitives.IntegerValue;
 import holo.interpreter.values.primitives.ListValue;
@@ -41,6 +43,8 @@ public interface Value {
 			return new StringValue(toString() + sv.getValue());
 		else if(operation == BinaryOperationType.DOUBLE_EQUALS)
 			return BooleanValue.get(equalTo(right));
+		else if(operation == BinaryOperationType.NOT_EQUAL)
+			return BooleanValue.get(!equalTo(right));
 		
 		return null;
 	}
@@ -61,11 +65,12 @@ public interface Value {
 	
 	public static Value convertJavaToFoxValue(Object obj) {
 		if(obj == null) return Value.NULL;
-		else if(obj instanceof Integer v) return new IntegerValue(v);
+		else if(obj instanceof Integer v) return IntegerValue.get(v);
 		else if(obj instanceof Float v) return new FloatValue(v);
-		else if(obj instanceof Double v) return new FloatValue(v);
-		else if(obj instanceof String v) return new StringValue(v);
+		else if(obj instanceof Double v) return new DoubleValue(v);
+		else if(obj instanceof Character v) return new CharValue(v);
 		else if(obj instanceof Boolean v) return BooleanValue.get(v);
+		else if(obj instanceof String v) return new StringValue(v);
 		else if(obj instanceof Value v) return v;
 		else if(obj instanceof FoxPortal v) return new FoxPortalWrapper(v);
 		else if(obj instanceof List<?> list) {
@@ -74,8 +79,6 @@ public interface Value {
 				elements.add(convertJavaToFoxValue(l));
 			return new ListValue(elements);
 		}
-		
-		System.out.println(obj.getClass().getSimpleName());
 		
 		return new FoxPortalWrapper(obj);
 	}
