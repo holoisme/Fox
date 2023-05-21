@@ -11,7 +11,7 @@ public class ListPrototype  {
 		PROTOTYPE = new Prototype<>("List");
 		
 		PROTOTYPE.addFunction("size", (self, runtime, args) -> {
-			return runtime.buffer(new IntegerValue(self.size()));
+			return runtime.buffer(IntegerValue.get(self.size()));
 		});
 		
 		PROTOTYPE.addFunction("add", (self, runtime, args) -> {
