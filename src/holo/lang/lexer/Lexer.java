@@ -25,7 +25,7 @@ public class Lexer {
 		"this",
 		"and", "or", "not",
 		"true", "false", "null",
-		"int", "float", "string", "boolean",
+		"int", "float", "double", "char", "string", "boolean",
 		"class", "enum", "constructor", "static", "new"
 	};
 	
@@ -70,10 +70,10 @@ public class Lexer {
 			else if(c == '{') tokens.add(new Token("{", TokenType.LEFT_CURLY_BRACKET, Sequence.from(line, row, 1, fileName)));
 			else if(c == '}') tokens.add(new Token("}", TokenType.RIGHT_CURLY_BRACKET, Sequence.from(line, row, 1, fileName)));
 			else if(c == ':') tokens.add(new Token(":", TokenType.COLON, Sequence.from(line, row, 1, fileName)));
-			else if(c == '.') tokens.add(new Token(".", TokenType.POINT, Sequence.from(line, row, 1, fileName)));
 			else if(c == ',') tokens.add(new Token(",", TokenType.COMMA, Sequence.from(line, row, 1, fileName)));
 			else if(c == '?') tokens.add(new Token("?", TokenType.QUESTION_MARK, Sequence.from(line, row, 1, fileName)));
 			
+			else if(c == '.') i = buildPoint(i, chars, line, row, fileName, tokens);
 			else if(c == '!') i = buildExclamationMark(i, chars, line, row, fileName, tokens);
 			else if(c == '&') i = buildBooleanOp(i, c, chars, "and", line, row, fileName, tokens);
 			else if(c == '|') i = buildBooleanOp(i, c, chars, "or", line, row, fileName, tokens);
@@ -124,7 +124,11 @@ public class Lexer {
 			}
 			
 			if(c == begchar || c == '\n') {
-				tokens.add(new Token(str, TokenType.STRING, Sequence.from(line, row, str.length(), fileName)));
+				
+				if(begchar == '\'' && str.length() == 1) {
+					tokens.add(new Token(str, TokenType.CHARACTER, Sequence.from(line, row, str.length(), fileName)));
+				} else tokens.add(new Token(str, TokenType.STRING, Sequence.from(line, row, str.length(), fileName)));
+				
 				return i;
 			} else str+=c;
 			escapingNext = false;
@@ -134,14 +138,18 @@ public class Lexer {
 	}
 	
 	private static int buildNumber(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
-		String str = "";
-		boolean isFloat = false;
+		return buildNumber(index, chars, line, row, fileName, tokens, "", false);
+	}
+	
+	private static int buildNumber(int index, char[] chars, int line, int row, String fileName, List<Token> tokens, String precomp, boolean containsPoint) {
+		String str = precomp;
+		boolean hasAPoint = containsPoint;
 		
 		for(; index < chars.length; index++) {
 			char c = chars[index];
 			if(DIGITS.contains(c + "")) str += c;
-			else if(c == '.' && !isFloat) {
-				isFloat = true;
+			else if(c == '.' && !hasAPoint) {
+				hasAPoint = true;
 				str += '.';
 			} else {
 				index--;
@@ -149,7 +157,23 @@ public class Lexer {
 			}
 		}
 		
-		tokens.add(new Token(str, isFloat?TokenType.FLOAT:TokenType.INTEGER, Sequence.from(line, row, str.length(), fileName)));
+		TokenType type = hasAPoint?TokenType.DOUBLE:TokenType.INTEGER;
+		
+		if(index < chars.length - 1) {
+			final char next = chars[index + 1];
+			
+			if(next == 'f' || next == 'F') {
+				index++;
+				type = TokenType.FLOAT;
+			}
+			
+			if(!hasAPoint && (next == 'l' || next == 'L')) {
+				index++;
+				type = TokenType.LONG;
+			}
+		}
+		
+		tokens.add(new Token(str, type, Sequence.from(line, row, str.length(), fileName)));
 		return index;
 	}
 	
@@ -196,6 +220,15 @@ public class Lexer {
 			return index + 1;
 		}
 		tokens.add(new Token(current + "", single, Sequence.from(line, row, 1, fileName)));
+		return index;
+	}
+	
+	private static int buildPoint(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
+		if(index < chars.length - 1 && DIGITS.contains(chars[index + 1]+"")) {
+			index++;
+			return buildNumber(index, chars, line, row, fileName, tokens, "0.", true);
+		}
+		tokens.add(new Token(".", TokenType.POINT, Sequence.from(line, row, 1, fileName)));
 		return index;
 	}
 	
