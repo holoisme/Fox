@@ -7,8 +7,9 @@ import holo.errors.RuntimeError;
 import holo.errors.portal.NoSuchMethodError;
 import holo.interpreter.RuntimeResult;
 import holo.interpreter.values.Value;
+import holo.interpreter.values.interfaces.ICallHandler;
 
-public class FoxPortalWrapper implements Value {
+public class FoxPortalWrapper implements Value, ICallHandler {
 	
 	private Object value;
 	
@@ -20,7 +21,7 @@ public class FoxPortalWrapper implements Value {
 	public String typeName() {
 		if(value instanceof FoxPortal)
 			return ((FoxPortal) value).typeName();
-		return "portal";
+		return value.getClass().getSimpleName();
 	}
 
 	@Override
@@ -65,9 +66,7 @@ public class FoxPortalWrapper implements Value {
 			Object returnedObject = method.invoke(value, convertedArgs);
 			
 			return onGoing.success(Value.convertJavaToFoxValue(returnedObject));
-		} catch (Exception e) {
-			return onGoing.failure(new RuntimeError(e.getMessage(), null));
-		}
+		} catch (Exception e) { return onGoing.failure(new RuntimeError(e.getMessage(), null)); }
 	}
 
 	@Override
@@ -76,7 +75,6 @@ public class FoxPortalWrapper implements Value {
 			Field field = value.getClass().getField(key);
 			if(field == null || field.isAnnotationPresent(FoxIgnore.class))
 				return null;
-			System.out.println(field);
 			field.set(value, v.toJavaObject());
 			return v;
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) { e.printStackTrace(); }
