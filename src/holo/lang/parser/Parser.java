@@ -35,7 +35,9 @@ import holo.interpreter.nodes.structures.MultiStatementsNode;
 import holo.interpreter.nodes.structures.TryCatchNode;
 import holo.interpreter.nodes.structures.WhileNode;
 import holo.interpreter.nodes.values.CastingNode;
+import holo.interpreter.nodes.values.CharacterNode;
 import holo.interpreter.nodes.values.DefaultValueNode;
+import holo.interpreter.nodes.values.DoubleNode;
 import holo.interpreter.nodes.values.FloatNode;
 import holo.interpreter.nodes.values.IntegerNode;
 import holo.interpreter.nodes.values.ListNode;
@@ -85,6 +87,18 @@ public class Parser {
 			Token token = currentToken;
 			advance(pr);
 			return pr.success(new FloatNode(Float.parseFloat(token.content()), token.sequence()));
+		}
+		
+		if(matches(TokenType.DOUBLE)) {
+			Token token = currentToken;
+			advance(pr);
+			return pr.success(new DoubleNode(Double.parseDouble(token.content()), token.sequence()));
+		}
+		
+		if(matches(TokenType.CHARACTER)) {
+			Token token = currentToken;
+			advance(pr);
+			return pr.success(new CharacterNode(token.content().charAt(0), token.sequence()));
 		}
 		
 		if(matches(TokenType.STRING)) {
@@ -843,7 +857,7 @@ public class Parser {
 		
 		CastingType type = null;
 		
-		if(matches(TokenType.KEYWORD, "int", "float", "string", "boolean")) {
+		if(matches(TokenType.KEYWORD, "int", "float", "double", "char", "string", "boolean")) {
 			pr.commit();
 			
 			Token tokenType = extract(pr, TokenType.KEYWORD);
@@ -857,7 +871,7 @@ public class Parser {
 		if(pr.shouldReturn()) return pr;
 		advance(pr);
 		
-		Node expression = pr.register(expression());
+		Node expression = pr.register(leaf()); // TODO was expression
 		if(pr.shouldReturn()) return pr;
 		
 		return pr.success(new CastingNode(type, expression, since(sequence)));
