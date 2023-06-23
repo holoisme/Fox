@@ -15,16 +15,22 @@ import holo.interpreter.nodes.helpers.DefinitionArgument;
 import holo.interpreter.nodes.helpers.EnumEntry;
 import holo.interpreter.nodes.helpers.ObjectStatementSequence;
 import holo.interpreter.nodes.helpers.ObligatoryDefinitionArgument;
+import holo.interpreter.nodes.helpers.SwitchCase;
+import holo.interpreter.nodes.helpers.SwitchMultiCaseRecord;
+import holo.interpreter.nodes.helpers.SwitchSingleCaseRecord;
 import holo.interpreter.nodes.operations.BinaryOperationNode;
+import holo.interpreter.nodes.operations.NullishOperationNode;
 import holo.interpreter.nodes.operations.TernaryOperationNode;
 import holo.interpreter.nodes.operations.UnaryOperationNode;
 import holo.interpreter.nodes.statements.AssertNode;
 import holo.interpreter.nodes.statements.BreakNode;
 import holo.interpreter.nodes.statements.ContinueNode;
+import holo.interpreter.nodes.statements.MultiAssertNode;
 import holo.interpreter.nodes.statements.ReturnNode;
 import holo.interpreter.nodes.statements.SingleImportNode;
 import holo.interpreter.nodes.statements.SingleLibraryImportNode;
 import holo.interpreter.nodes.structures.ClassDeclarationNode;
+import holo.interpreter.nodes.structures.DoWhileNode;
 import holo.interpreter.nodes.structures.EnumDeclarationNode;
 import holo.interpreter.nodes.structures.FileStatementsNode;
 import holo.interpreter.nodes.structures.ForEachNode;
@@ -32,6 +38,7 @@ import holo.interpreter.nodes.structures.ForNode;
 import holo.interpreter.nodes.structures.FunctionDefinitionNode;
 import holo.interpreter.nodes.structures.IfNode;
 import holo.interpreter.nodes.structures.MultiStatementsNode;
+import holo.interpreter.nodes.structures.SwitchNode;
 import holo.interpreter.nodes.structures.TryCatchNode;
 import holo.interpreter.nodes.structures.WhileNode;
 import holo.interpreter.nodes.values.CastingNode;
@@ -45,6 +52,7 @@ import holo.interpreter.nodes.values.ObjectNode;
 import holo.interpreter.nodes.values.StringNode;
 import holo.interpreter.nodes.values.ThisNode;
 import holo.interpreter.nodes.var.MultiVarDeclarationNode;
+import holo.interpreter.nodes.var.OptionalChainingNode;
 import holo.interpreter.nodes.var.VarAccessNode;
 import holo.interpreter.nodes.var.VarArrayAccessNode;
 import holo.interpreter.nodes.var.VarAssignOperationNode;
@@ -58,18 +66,25 @@ import holo.interpreter.types.QuickOperationType;
 import holo.interpreter.types.UnaryOperationType;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.BooleanValue;
+import holo.lang.lexer.LexerResult;
 import holo.lang.lexer.Sequence;
 import holo.lang.lexer.Token;
 import holo.lang.lexer.TokenType;
 
 public class Parser {
 	
+	private LexerResult lexerResult;
+	
 	private List<Token> tokens;
 	private int currentTokenIndex;
 	private Token currentToken;
 	
-	public Parser(List<Token> tokens) {
-		this.tokens = tokens;
+	public Parser(LexerResult lexerResult) {
+		if(lexerResult.hasError())
+			throw new IllegalArgumentException("The lexer result has an unresolved error.");
+		
+		this.lexerResult = lexerResult;
+		this.tokens = lexerResult.tokens();
 		this.currentTokenIndex = 0;
 		this.currentToken = tokens.get(0);
 	}
@@ -185,11 +200,25 @@ public class Parser {
 			return pr.success(whileExpression);
 		}
 		
+		if(matches(TokenType.KEYWORD, "do")) {
+			Node whileExpression = pr.register(do_expression());
+			if(pr.shouldReturn()) return pr;
+			
+			return pr.success(whileExpression);
+		}
+		
 		if(matches(TokenType.KEYWORD, "try")) {
 			Node tryCatchExpression = pr.register(try_catch_expression());
 			if(pr.shouldReturn()) return pr;
 			
 			return pr.success(tryCatchExpression);
+		}
+		
+		if(matches(TokenType.KEYWORD, "switch")) {
+			Node switchExpression = pr.register(switch_expression());
+			if(pr.shouldReturn()) return pr;
+			
+			return pr.success(switchExpression);
 		}
 		
 		if(matches(TokenType.KEYWORD, "new")) {
@@ -199,7 +228,212 @@ public class Parser {
 			return pr.success(newExpression);
 		}
 		
+		if(matches("class", TokenType.KEYWORD)) {
+			Node classDeclaration = pr.register(class_declaration());
+			if(pr.shouldReturn()) return pr;
+			
+			return pr.success(classDeclaration);
+		}
+		
+		if(matches("enum", TokenType.KEYWORD)) {
+			Node enumDeclaration = pr.register(enum_declaration());
+			if(pr.shouldReturn()) return pr;
+			
+			return pr.success(enumDeclaration);
+		}
+		
+//		if(matches("assert", TokenType.KEYWORD)) {
+//			Node assertStatement = pr.register(assert_statement());
+//			if(pr.shouldReturn()) return pr;
+//			
+//			return pr.success(assertStatement);
+//		}
+		
 		return pr.failure(new SyntaxError(currentToken));
+	}
+	
+	private ParseResult do_expression() {
+		ParseResult pr = pr();
+		Sequence sequence = sequence();
+		
+		check(pr, "do", TokenType.KEYWORD);
+		if(pr.shouldReturn()) return pr;
+		advance(pr);
+		
+		Node body = null;
+		if(matches(TokenType.COLON)) {
+			advance(pr);
+			
+			body = pr.register(expression());
+			if(pr.shouldReturn()) return pr;
+		} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
+			body = pr.register(boundedMultiStatements());
+			if(pr.shouldReturn()) return pr;
+		} else {
+			body = pr.register(expression());
+			if(pr.shouldReturn()) return pr;
+		}
+		
+		check(pr, "while", TokenType.KEYWORD);
+		if(pr.shouldReturn()) return pr;
+		advance(pr);
+		
+		Node condition = pr.register(expression());
+		if(pr.shouldReturn()) return pr;
+		
+		return pr.success(new DoWhileNode(condition, body, since(sequence)));
+	}
+	
+	private ParseResult switch_expression() {
+		ParseResult pr = pr();
+		Sequence sequence = sequence();
+		
+		check(pr, "switch", TokenType.KEYWORD);
+		if(pr.shouldReturn()) return pr;
+		advance(pr);
+		
+		Node expression = pr.register(expression());
+		if(pr.shouldReturn()) return pr;
+		
+		if(matches(TokenType.COLON))
+			return switch_quick_expression(expression, pr, sequence);
+		
+		check(pr, TokenType.LEFT_CURLY_BRACKET);
+		if(pr.shouldReturn()) return pr;
+		advance(pr);
+		
+		Node catchExpression = null;
+		List<SwitchCase> cases = new ArrayList<>();
+		
+		do {
+			Sequence caseSeq = sequence();
+			
+			if(matches(TokenType.KEYWORD, "catch")) {
+				if(catchExpression != null)
+					return pr.failure(new SyntaxError(currentToken));
+				
+				advance(pr);
+				
+				if(matches(TokenType.COLON)) {
+					advance(pr);
+					catchExpression = pr.register(expression());
+					if(pr.shouldReturn()) return pr;
+					
+					if(matches(TokenType.DELIMITER))
+						advance(pr);
+				} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
+					catchExpression = pr.register(boundedMultiStatements());
+					if(pr.shouldReturn()) return pr;
+				} else return pr.failure(new SyntaxError(currentToken));
+			}
+			
+			if(matches(TokenType.KEYWORD, "case")) {
+				advance(pr);
+				
+				List<Node> equalities = new ArrayList<>();
+				
+				do {
+					if(equalities.size() != 0)
+						advance(pr);
+					
+					Node expr = pr.register(expression());
+					if(pr.shouldReturn()) return pr;
+					
+					equalities.add(expr);
+				} while(matches(TokenType.COMMA));
+				
+				if(equalities.size() == 0)
+					return pr.failure(new SyntaxError(currentToken, "[condition]"));
+				
+				Node body = null;
+				if(matches(TokenType.COLON)) {
+					advance(pr);
+					
+					body = pr.register(statement());
+					if(pr.shouldReturn()) return pr;
+					
+					if(matches(TokenType.DELIMITER))
+						advance(pr);
+				} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
+					body = pr.register(boundedMultiStatements());
+					if(pr.shouldReturn()) return pr;
+				} else return pr.failure(new SyntaxError(currentToken));
+				
+				SwitchCase sCase = equalities.size() == 1 ?
+									new SwitchSingleCaseRecord(equalities.get(0), body, since(caseSeq)):
+									new SwitchMultiCaseRecord(equalities.toArray(new Node[equalities.size()]), body, since(caseSeq));
+				
+				cases.add(sCase);
+			}
+		} while(matches(TokenType.KEYWORD, "case", "catch"));
+		
+		check(pr, TokenType.RIGHT_CURLY_BRACKET);
+		if(pr.shouldReturn()) return pr;
+		advance(pr);
+		
+		return pr.success(new SwitchNode(expression, cases.toArray(new SwitchCase[cases.size()]), catchExpression, since(sequence)));
+	}
+	
+	private ParseResult switch_quick_expression(Node expression, ParseResult pr, Sequence sequence) {
+		check(pr, TokenType.COLON);
+		if(pr.shouldReturn()) return pr;
+		advance(pr);
+		
+		Node catchExpression = null;
+		List<SwitchCase> cases = new ArrayList<>();
+		
+		do {
+			if(cases.size() != 0)
+				advance(pr);
+			
+			Sequence caseSeq = sequence();
+			
+			if(matches(TokenType.KEYWORD, "catch")) {
+				if(catchExpression != null)
+					return pr.failure(new SyntaxError(currentToken));
+				
+				advance(pr);
+				
+				check(pr, TokenType.ARROW);
+				if(pr.shouldReturn()) return pr;
+				advance(pr);
+				
+				catchExpression = pr.register(expression());
+				if(pr.shouldReturn()) return pr;
+				
+				continue;
+			}
+			
+			List<Node> equalities = new ArrayList<>();
+			
+			do {
+				if(equalities.size() != 0)
+					advance(pr);
+				
+				Node expr = pr.register(expression());
+				if(pr.shouldReturn()) return pr;
+				
+				equalities.add(expr);
+			} while(matches(TokenType.COMMA));
+			
+			if(equalities.size() == 0)
+				return pr.failure(new SyntaxError(currentToken, "[condition]"));
+			
+			check(pr, TokenType.ARROW);
+			if(pr.shouldReturn()) return pr;
+			advance(pr);
+			
+			Node body = pr.register(expression());
+			if(pr.shouldReturn()) return pr;
+			
+			SwitchCase sCase = equalities.size() == 1 ?
+								new SwitchSingleCaseRecord(equalities.get(0), body, since(caseSeq)):
+								new SwitchMultiCaseRecord(equalities.toArray(new Node[equalities.size()]), body, since(caseSeq));
+			
+			cases.add(sCase);
+		} while(matches(TokenType.COMMA));
+		
+		return pr.success(new SwitchNode(expression, cases.toArray(new SwitchCase[cases.size()]), catchExpression, since(sequence)));
 	}
 	
 	private ParseResult new_expression() {
@@ -274,7 +508,10 @@ public class Parser {
 			conditions.add(expression);
 		} while(matches(TokenType.COMMA));
 		
-		return pr.success(new AssertNode(conditions.toArray(new Node[conditions.size()]), since(sequence)));
+		if(conditions.size() == 1)
+			return pr.success(new AssertNode(conditions.get(0), since(sequence)));
+		
+		return pr.success(new MultiAssertNode(conditions.toArray(new Node[conditions.size()]), since(sequence)));
 	}
 	
 	private ParseResult void_class_declaration() {
@@ -539,11 +776,14 @@ public class Parser {
 			Sequence conditionSequence = sequence();
 			
 			if(conditionnedNodes.size() != 0) {
-				advance(pr); // to elminate else
+				advance(pr);
 				
 				if(matches("if", TokenType.KEYWORD))
 					advance(pr);
 				else {
+					
+//					ignore(pr, TokenType.COLON);
+					
 					if(matches(TokenType.COLON)) {
 						advance(pr);
 						
@@ -552,11 +792,18 @@ public class Parser {
 					} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
 						elseBodyNode = pr.register(boundedMultiStatements());
 						if(pr.shouldReturn()) return pr;
-					} else return pr.failure(new SyntaxError(currentToken));
+					} else {
+						elseBodyNode = pr.register(statement());
+						if(pr.shouldReturn()) return pr;
+					}
+					
+					//else return pr.failure(new SyntaxError(currentToken));
 					
 					break;
 				}
 			}
+			
+			boolean startedWithParenthese = matches(TokenType.LEFT_PARENTHESE);
 			
 			Node condition = pr.register(expression());
 			if(pr.shouldReturn()) return pr;
@@ -569,6 +816,9 @@ public class Parser {
 				if(pr.shouldReturn()) return pr;
 			} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
 				body = pr.register(boundedMultiStatements());
+				if(pr.shouldReturn()) return pr;
+			} else if(startedWithParenthese) {
+				body = pr.register(statement());
 				if(pr.shouldReturn()) return pr;
 			} else return pr.failure(new SyntaxError(currentToken));
 			
@@ -629,7 +879,10 @@ public class Parser {
 		} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
 			body = pr.register(boundedMultiStatements());
 			if(pr.shouldReturn()) return pr;
-		} else return pr.failure(new SyntaxError(currentToken));
+		} else {
+			body = pr.register(expression());
+			if(pr.shouldReturn()) return pr;
+		}
 		
 		return pr.success(new ForNode(initialization, condition, step, body, since(sequence)));
 	}
@@ -642,6 +895,8 @@ public class Parser {
 		if(pr.shouldReturn()) return pr;
 		advance(pr);
 		
+		boolean startedWithParenthese = matches(TokenType.LEFT_PARENTHESE);
+		
 		Node condition = pr.register(statement());
 		if(pr.shouldReturn()) return pr;
 		
@@ -653,6 +908,9 @@ public class Parser {
 			if(pr.shouldReturn()) return pr;
 		} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
 			body = pr.register(boundedMultiStatements());
+			if(pr.shouldReturn()) return pr;
+		} else if(startedWithParenthese) {
+			body = pr.register(expression());
 			if(pr.shouldReturn()) return pr;
 		} else return pr.failure(new SyntaxError(currentToken));
 		
@@ -688,7 +946,10 @@ public class Parser {
 		} else if(matches(TokenType.LEFT_CURLY_BRACKET)) {
 			body = pr.register(boundedMultiStatements());
 			if(pr.shouldReturn()) return pr;
-		} else return pr.failure(new SyntaxError(currentToken));
+		} else {
+			body = pr.register(expression());
+			if(pr.shouldReturn()) return pr;
+		}
 		
 		return pr.success(new ForEachNode(var.content(), list, body, since(sequence)));
 	}
@@ -795,10 +1056,15 @@ public class Parser {
 		
 		List<ObjectStatementSequence> statements = new ArrayList<>();
 		do {
-			if(matches(TokenType.RIGHT_CURLY_BRACKET))
-				break;
-			if(statements.size() != 0)
+			if(matches(TokenType.COMMA)) {
 				advance(pr);
+				
+				if(matches(TokenType.RIGHT_CURLY_BRACKET))
+					break;
+			}
+//			if(statements.size() != 0)
+//				advance(pr);
+//			System.out.println(currentToken);
 			
 			Sequence objectStatementSequence = sequence();
 			
@@ -871,7 +1137,7 @@ public class Parser {
 		if(pr.shouldReturn()) return pr;
 		advance(pr);
 		
-		Node expression = pr.register(leaf()); // TODO was expression
+		Node expression = pr.register(access(true));
 		if(pr.shouldReturn()) return pr;
 		
 		return pr.success(new CastingNode(type, expression, since(sequence)));
@@ -933,12 +1199,20 @@ public class Parser {
 		
 		boolean isLastCall = false;
 		
-		while(matches(TokenType.POINT, TokenType.LEFT_BRACKET, TokenType.LEFT_PARENTHESE)) {
+		while(matches(TokenType.OPTIONAL_CHAINING, TokenType.POINT, TokenType.LEFT_BRACKET, TokenType.LEFT_PARENTHESE)) {
 			Sequence sequence = sequence();
 			
 			Token token = currentToken;
 			advance(pr);
 			isLastCall = false;
+			
+			if(token.matches(TokenType.OPTIONAL_CHAINING)) {
+				Token name = extract(pr, TokenType.IDENTIFIER);
+				if(pr.shouldReturn()) return pr;
+				advance(pr);
+				
+				expr = new OptionalChainingNode(expr, name.content(), since(sequence));
+			}
 			
 			if(token.matches(TokenType.POINT)) {
 				Token name = extract(pr, TokenType.IDENTIFIER);
@@ -1175,25 +1449,43 @@ public class Parser {
 		return pr.success(left);
 	}
 	
+	private ParseResult comp_binop_nullish() {
+		ParseResult pr = pr();
+		Sequence sequence = sequence();
+		
+		Node left = pr.register(comp_binop_OR());
+		
+		while(matches(TokenType.DOUBLE_QUESTION_MARK)) {
+			advance(pr);
+			
+			Node right = pr.register(comp_binop_OR());
+			if(pr.shouldReturn()) return pr;
+			
+			left = new NullishOperationNode(left, right, since(sequence));
+		}
+		
+		return pr.success(left);
+	}
+	
 	private ParseResult comp_ternop() {
 		ParseResult pr = pr();
 		Sequence sequence = sequence();
 		
-		Node expr = pr.register(comp_binop_OR());
+		Node expr = pr.register(comp_binop_nullish());
 		if(pr.shouldReturn()) return pr;
 		
 		while(matches(TokenType.QUESTION_MARK)) {
 			
 			advance(pr);
 			
-			Node ifTrue = pr.register(comp_binop_OR());
+			Node ifTrue = pr.register(comp_binop_nullish());
 			if(pr.shouldReturn()) return pr;
 			
 			check(pr, TokenType.COLON);
 			if(pr.shouldReturn()) return pr;
 			advance(pr);
 			
-			Node ifFalse = pr.register(comp_binop_OR());
+			Node ifFalse = pr.register(comp_binop_nullish());
 			if(pr.shouldReturn()) return pr;
 			
 			expr = new TernaryOperationNode(expr, ifTrue, ifFalse, since(sequence));
@@ -1202,13 +1494,17 @@ public class Parser {
 		return pr.success(expr);
 	}
 	
+//	private ParseResult expression() {
+//		ParseResult pr = pr();
+//		
+//		Node expr = pr.register(comp_ternop());
+//		if(pr.shouldReturn()) return pr;
+//		
+//		return pr.success(expr);
+//	}
+	
 	private ParseResult expression() {
-		ParseResult pr = pr();
-		
-		Node expr = pr.register(comp_ternop());
-		if(pr.shouldReturn()) return pr;
-		
-		return pr.success(expr);
+		return comp_ternop();
 	}
 	
 	private ParseResult statement() {
@@ -1250,17 +1546,20 @@ public class Parser {
 			advance(pr);
 			
 			return pr.success(new SingleImportNode(token.content(), since(sequence)));
-		} else if(matches("class", TokenType.KEYWORD)) {
-			Node classDeclaration = pr.register(class_declaration());
-			if(pr.shouldReturn()) return pr;
-			
-			return pr.success(classDeclaration);
-		} else if(matches("enum", TokenType.KEYWORD)) {
-			Node enumDeclaration = pr.register(enum_declaration());
-			if(pr.shouldReturn()) return pr;
-			
-			return pr.success(enumDeclaration);
-		} else if(matches("assert", TokenType.KEYWORD)) {
+		}
+//		else if(matches("class", TokenType.KEYWORD)) {
+//			Node classDeclaration = pr.register(class_declaration());
+//			if(pr.shouldReturn()) return pr;
+//			
+//			return pr.success(classDeclaration);
+//		}
+//		else if(matches("enum", TokenType.KEYWORD)) {
+//			Node enumDeclaration = pr.register(enum_declaration());
+//			if(pr.shouldReturn()) return pr;
+//			
+//			return pr.success(enumDeclaration);
+//		}
+		else if(matches("assert", TokenType.KEYWORD)) {
 			Node assertStatement = pr.register(assert_statement());
 			if(pr.shouldReturn()) return pr;
 			
