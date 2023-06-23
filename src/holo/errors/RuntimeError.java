@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import holo.errors.trace.TraceEntry;
+import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
-public class RuntimeError extends FoxError {
+public class RuntimeError extends FoxError implements Value {
 	
 	private String text;
 	
@@ -31,6 +32,41 @@ public class RuntimeError extends FoxError {
 	public RuntimeError addToTrace(String name, Sequence sequence) {
 		trace.add(new TraceEntry(name, sequence));
 		return this;
+	}
+
+	@Override
+	public String typeName() {
+		return "Error";
+	}
+
+	@Override
+	public boolean isTrue() {
+		return true;
+	}
+
+	@Override
+	public boolean equalTo(Value other) {
+		return this == other;
+	}
+
+	@Override
+	public Value pointGet(String key) {
+		return null; // TODO !
+	}
+
+	@Override
+	public Value pointSet(String key, Value value) {
+		return null;
+	}
+
+	@Override
+	public Value arrayGet(Value key) {
+		return null;
+	}
+
+	@Override
+	public Value arraySet(Value key, Value value) {
+		return null;
 	}
 
 }
