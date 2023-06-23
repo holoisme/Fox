@@ -1,19 +1,18 @@
 package holo.interpreter.nodes.statements;
 
-import java.util.Arrays;
-
 import holo.errors.AssertionError;
 import holo.interpreter.Interpreter;
 import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.ReflectionUtils;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
-public record AssertNode(Node[] conditions, Sequence sequence) implements Node {
+public record MultiAssertNode(Node[] conditions, Sequence sequence) implements Node {
 
 	public String toString() {
-		return "assert " + Arrays.toString(conditions);
+		return "assert " + ReflectionUtils.toString(conditions);
 	}
 	
 	@Override
