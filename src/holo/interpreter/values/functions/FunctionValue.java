@@ -1,12 +1,11 @@
 package holo.interpreter.values.functions;
 
-import java.util.Arrays;
-
 import holo.interpreter.Interpreter;
 import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.SimpleContext;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.ReflectionUtils;
 import holo.interpreter.nodes.helpers.SingleDefinitionArgument;
 import holo.interpreter.values.Value;
 
@@ -63,7 +62,7 @@ public class FunctionValue extends BaseFunctionValue {
 	}
 	
 	public String toString() {
-		return "("+Arrays.toString(definingArguments)+") -> " + body;
+		return "("+ReflectionUtils.toString(definingArguments)+") -> " + body;
 	}
 	
 	public Node getBody() {

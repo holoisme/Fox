@@ -1,6 +1,5 @@
 package holo.interpreter.nodes.values;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,6 +7,7 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.ReflectionUtils;
 import holo.interpreter.nodes.helpers.ObjectStatementSequence;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.ObjectValue;
@@ -16,7 +16,7 @@ import holo.lang.lexer.Sequence;
 public record ObjectNode(ObjectStatementSequence[] statements, Sequence sequence) implements Node {
 	
 	public String toString() {
-		return Arrays.toString(statements);
+		return "{ "+ReflectionUtils.toString(statements) + " }";
 	}
 	
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
