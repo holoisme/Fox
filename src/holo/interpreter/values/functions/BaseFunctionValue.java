@@ -34,8 +34,7 @@ public abstract class BaseFunctionValue implements Value, ICallable {
 
 	@Override
 	public boolean equalTo(Value other) {
-		// TODO Auto-generated method stub
-		return false;
+		return this == other;
 	}
 
 	@Override
