@@ -14,6 +14,7 @@ import holo.interpreter.RuntimeResult;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallHandler;
 import holo.interpreter.values.interfaces.IInstanciable;
+import holo.lang.lexer.Sequence;
 
 public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	
@@ -34,7 +35,7 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	}
 
 	@Override
-	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Value... args) {
+	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Sequence sequence, Value... args) {
 		Object[] convertedArgs = new Object[args.length];
 		Class<?>[] argsClasses = new Class<?>[args.length];
 		
