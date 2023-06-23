@@ -10,7 +10,7 @@ import holo.lang.lexer.Sequence;
 public record TernaryOperationNode(Node condition, Node ifTrue, Node ifFalse, Sequence sequence) implements Node {
 	
 	public String toString() {
-		return condition + " ? " + ifTrue + " : " + ifFalse;
+		return "{" + condition + " ? " + ifTrue + " : " + ifFalse+"}";
 	}
 	
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {

@@ -7,7 +7,7 @@ import holo.lang.lexer.Sequence;
 public record ConditionnedSequence(Node condition, Node body, Sequence sequence) implements Sequenced {
 	
 	public String toString() {
-		return condition + ": " + body;
+		return condition + " " + body;
 	}
 	
 }

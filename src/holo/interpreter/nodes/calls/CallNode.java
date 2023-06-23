@@ -1,7 +1,5 @@
 package holo.interpreter.nodes.calls;
 
-import java.util.Arrays;
-
 import holo.errors.CannotAccessError;
 import holo.errors.CannotCallError;
 import holo.errors.IncorrectNumberOfArguments;
@@ -9,6 +7,8 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.ReflectionUtils;
+import holo.interpreter.nodes.var.OptionalChainingNode;
 import holo.interpreter.nodes.var.VarPointAccessNode;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallHandler;
@@ -18,7 +18,7 @@ import holo.lang.lexer.Sequence;
 public record CallNode(Node access, Node[] args, Sequence sequence) implements Node {
 	
 	public String toString() {
-		return access.toString() + "("+Arrays.toString(args)+")";
+		return access.toString() + "("+ReflectionUtils.toString(args)+")";
 	}
 	
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
@@ -31,9 +31,24 @@ public record CallNode(Node access, Node[] args, Sequence sequence) implements N
 			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
 		}
 		
+//		System.out.println(access);
+		
 		if(access instanceof VarPointAccessNode pointAccess) {
 			hostValue = onGoingRuntime.register(pointAccess.access().interpret(parentContext, interpreter, onGoingRuntime), pointAccess.access().sequence());
 			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
+			
+			if(hostValue instanceof ICallHandler wrapper)
+				return handleFoxPortalWrapper(wrapper, pointAccess.varName(), argsValues, parentContext, interpreter, onGoingRuntime);
+			
+			accessValue = hostValue.pointGet(pointAccess.varName());
+			if(accessValue == null)
+				return onGoingRuntime.failure(new CannotAccessError(hostValue.typeName(), access.sequence()));
+		} else if(access instanceof OptionalChainingNode pointAccess) {
+			hostValue = onGoingRuntime.register(pointAccess.access().interpret(parentContext, interpreter, onGoingRuntime), pointAccess.access().sequence());
+			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
+			
+			if(hostValue == Value.NULL)
+				return onGoingRuntime.buffer(Value.NULL);
 			
 			if(hostValue instanceof ICallHandler wrapper)
 				return handleFoxPortalWrapper(wrapper, pointAccess.varName(), argsValues, parentContext, interpreter, onGoingRuntime);

@@ -13,7 +13,12 @@ import holo.interpreter.values.objects.ClassValue;
 import holo.lang.lexer.Sequence;
 
 public record ClassDeclarationNode(String name, ClassDeclarationBody body, Sequence sequence) implements Node {
-
+	
+	@Override
+	public String toString() {
+		return "class " + name + " {\n"+body.toString().indent(4)+"}";
+	}
+	
 	@Override
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
 		if(parentContext.contains(name))
@@ -38,11 +43,6 @@ public record ClassDeclarationNode(String name, ClassDeclarationBody body, Seque
 		parentContext.setToThis(name, classValue);
 		
 		return onGoingRuntime.buffer(classValue);
-	}
-
-	@Override
-	public String toString() {
-		return "class " + name + " {\n"+body.toString().indent(4)+"}";
 	}
 
 }

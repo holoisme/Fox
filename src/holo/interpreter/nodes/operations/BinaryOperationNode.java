@@ -12,7 +12,7 @@ import holo.lang.lexer.Sequence;
 public record BinaryOperationNode(BinaryOperationType operation, Node left, Node right, Sequence sequence) implements Node {
 	
 	public String toString() {
-		return "("+left + " " + operation.toString() + " " + right+")";
+		return left + " " + operation.toString() + " " + right;
 	}
 	
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {

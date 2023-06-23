@@ -1,11 +1,10 @@
 package holo.interpreter.nodes.var;
 
-import java.util.Arrays;
-
 import holo.interpreter.Interpreter;
 import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.ReflectionUtils;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
@@ -21,7 +20,7 @@ public record MultiVarDeclarationNode(VarDeclarationNode[] declarations, Sequenc
 
 	@Override
 	public String toString() {
-		return Arrays.toString(declarations);
+		return ReflectionUtils.toString(declarations);
 	}
 
 }
