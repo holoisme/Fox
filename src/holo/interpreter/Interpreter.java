@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import holo.errors.FoxError;
@@ -14,7 +13,7 @@ import holo.interpreter.contexts.FileInnerContext;
 import holo.interpreter.contexts.FileShellContext;
 import holo.interpreter.imports.Library;
 import holo.lang.lexer.Lexer;
-import holo.lang.lexer.Token;
+import holo.lang.lexer.LexerResult;
 import holo.lang.parser.ParseResult;
 import holo.lang.parser.Parser;
 
@@ -63,50 +62,40 @@ public class Interpreter {
 	
 	public RuntimeResult execute(Path path) {
 		try {
-			List<Token> tokens = Lexer.extract(path.toFile());
-			Parser parser = new Parser(tokens);
-			ParseResult result = parser.parse();
+			long timer = System.currentTimeMillis();
+			LexerResult lexResult = Lexer.extract(path.toFile());
+			print("[Lexer] " + (System.currentTimeMillis() - timer) + "ms for " + path.toString() + " ["+lexResult.tokens().size()+" tokens]");
 			
-			FoxError error = result.getError();
+			if(lexResult.hasError()) {
+				lexResult.error().display(errStream, lexResult.originalText());
+				return new RuntimeResult().failure(new ImportError(lexResult.error()));
+			}
+			
+			Parser parser = new Parser(lexResult);
+			
+			timer = System.currentTimeMillis();
+			ParseResult parseResult = parser.parse();
+			print("[Parser] " + (System.currentTimeMillis() - timer) + "ms for " + path.toString() + "\n");
+			
+			FoxError error = parseResult.getError();
 			if(error != null) {
-				error.display();
+				error.display(errStream, lexResult.originalText());
 				return new RuntimeResult().failure(new ImportError(error));
 			}
 			
-			RuntimeResult runtime = null;
+			FileShellContext fileContext = new FileShellContext(path.getFileName().toString());
 			
-			if(!performance) {
-				FileShellContext fileContext = new FileShellContext(path.getFileName().toString());
-				
-				long startTime = System.currentTimeMillis();
-				printDebug("[Interpreter] Executing " + path.toFile().getName() + "...");
-				runtime = result.node().interpret(fileContext.getInnerContext(), this, null);
-				printDebug("[Interpreter] Executed in " + (System.currentTimeMillis() - startTime) + "ms");
-				loadedFiles.put(path, fileContext.getInnerContext());
-			} else {
-				long timeSum = 0;
-				final int iterationCount = 100;
-				
-				for(int i = 0; i < iterationCount; i++) {
-					FileShellContext fileContext = new FileShellContext(path.getFileName().toString());
-					
-					long startTime = System.currentTimeMillis();
-					printDebug("[Interpreter] Executing " + path.toFile().getName() + "...");
-					runtime = result.node().interpret(fileContext.getInnerContext(), this, null);
-					printDebug("[Interpreter] Executed in " + (System.currentTimeMillis() - startTime) + "ms");
-					
-					timeSum += (System.currentTimeMillis() - startTime);
-					
-					loadedFiles.put(path, fileContext.getInnerContext());
-				}
-				
-				print("Average execution time " + (timeSum / (float)iterationCount) + " ms");
-			}
+			printDebug("[Interpreter] Executing " + path.toFile().getName() + "...");
+			long startTime = System.currentTimeMillis();
+			RuntimeResult runtime = parseResult.node().interpret(fileContext.getInnerContext(), this, null);
+			printDebug("[Interpreter] Executed in " + (System.currentTimeMillis() - startTime) + "ms");
 			
-			if(debug) System.out.println("\n" + runtime.toStringFull(path.toFile().getName()));
+			loadedFiles.put(path, fileContext.getInnerContext());
+			
+			printDebug("\n" + runtime.toStringFull(path.toFile().getName()));
 			
 			if(runtime.hasError())
-				runtime.getError().display();
+				runtime.getError().display(errStream, lexResult.originalText());
 			
 			return runtime;
 		} catch (IOException e) {
@@ -132,10 +121,15 @@ public class Interpreter {
 		errStream.println(o);
 	}
 	
+	protected void addLoadedFile(Path path, FileInnerContext context) { loadedFiles.put(path, context); }
+	
 	public void setDebug(boolean debug) { this.debug = debug; }
 	public void setPerformance(boolean performance) { this.performance = performance; }
 	
 	public boolean onDebug() { return debug; }
 	public boolean onPerformance() { return performance; }
+	
+	public PrintStream getOutStream() { return outStream; }
+	public PrintStream getErrorStream() { return errStream; }
 	
 }
