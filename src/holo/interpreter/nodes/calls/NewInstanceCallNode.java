@@ -14,7 +14,6 @@ import holo.lang.lexer.Sequence;
 public record NewInstanceCallNode(CallNode call, Sequence sequence) implements Node {
 
 	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		
 		Value hostValue = null;
 		Value accessValue = null;
 		
@@ -37,7 +36,7 @@ public record NewInstanceCallNode(CallNode call, Sequence sequence) implements N
 		}
 		
 		if(accessValue instanceof IInstanciable instanciable) {
-			Value value = onGoingRuntime.register(instanciable.createInstance(interpreter, onGoingRuntime, argsValues), null);
+			Value value = onGoingRuntime.register(instanciable.createInstance(interpreter, onGoingRuntime, sequence, argsValues), null);
 			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
 			
 			return onGoingRuntime.buffer(value);
