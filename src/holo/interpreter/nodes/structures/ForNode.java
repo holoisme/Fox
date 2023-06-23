@@ -59,11 +59,13 @@ public record ForNode(Node initialization, Node condition, Node step, Node body,
 					break;
 				}
 				
-				rt.register(step.interpret(forContext, interpreter, rt), step.sequence());
 				if(rt.encounteredContinue()) {
 					rt.disableContinue();
+					rt.register(step.interpret(forContext, interpreter, rt), step.sequence());
 					continue;
 				}
+				
+				rt.register(step.interpret(forContext, interpreter, rt), step.sequence());
 				
 				if(rt.shouldReturn()) return rt;
 			}
