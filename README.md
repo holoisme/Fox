@@ -26,6 +26,9 @@ function generateRandomValues(): for(var i = 0; i < 20000; i++): random(); // cr
 
 var instance = generateRandomValues();
 
+var pi = 3.1415;
+var pi_float = 3.1415f;
+
 class Vector {
   constructor() {
     this.x = this.y = this.z = 0;
@@ -58,7 +61,8 @@ enum TokenType {
 ### Java API ☕
 Let's say you want to include the following **Java class** into the Fox environnement, this is how we proceed :
 ```java
-class Player {
+public class Player {
+
   private String name;
   private float damage;
   
@@ -86,7 +90,7 @@ And you're done !<br>
 Your end-users have now full access to that class from the Fox scripts :
 ```javascript
 var p = new Player("John");
-p.setDamage(12.5);
+p.setDamage(12.5f);
 p.present();
 ```
 The real point of [**Fox**](https://github.com/HoloInJava/Fox) is that it is an **interpreted programming language**, meaning that everything happens in **runtime**, which is perfect for Game Engines, mod support, plugin development, sandboxes etc.<br>
