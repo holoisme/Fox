@@ -69,7 +69,7 @@ public class FloatValue implements Value, INumber {
 			
 		}
 		
-		return null;
+		return Value.super.binaryOperation(operation, right);
 	}
 	
 	public Value quickOperation(QuickOperationType operation) {
