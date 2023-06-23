@@ -3,6 +3,7 @@ package holo.interpreter.values.objects;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import holo.errors.ConstructorNotFoundError;
 import holo.interpreter.Interpreter;
@@ -13,6 +14,7 @@ import holo.interpreter.nodes.structures.MultiStatementsNode;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.functions.FunctionValue;
 import holo.interpreter.values.interfaces.IInstanciable;
+import holo.lang.lexer.Sequence;
 
 public class ClassValue implements Value, Context, IInstanciable {
 	
@@ -53,7 +55,7 @@ public class ClassValue implements Value, Context, IInstanciable {
 	
 	public boolean equalTo(Value other) { return this.equals(other); }
 	
-	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Value... args) {
+	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Sequence sequence, Value... args) {
 		FunctionValue choosenConstructor = null;
 		for(FunctionValue con:constructors) {
 			if(con.numberOfArguments() == args.length) {
@@ -63,17 +65,17 @@ public class ClassValue implements Value, Context, IInstanciable {
 		}
 		
 		if(choosenConstructor == null && (constructors.length != 0 || args.length > 0))
-			return onGoing.failure(new ConstructorNotFoundError(name, args.length, null));
+			return onGoing.failure(new ConstructorNotFoundError(name, args.length, sequence));
 		
 		ConstructedObjectValue object = new ConstructedObjectValue(name, this);
 		
 		for(Node node:instanciateBody.statements()) {
-			onGoing.register(node.interpret(object, interpreter, onGoing), null);
+			onGoing.register(node.interpret(object, interpreter, onGoing), sequence);
 			if(onGoing.shouldReturn()) return onGoing;
 		}
 		
 		if(choosenConstructor != null) {
-			onGoing.register(choosenConstructor.callInside(object, object, interpreter, onGoing, args), null);
+			onGoing.register(choosenConstructor.callInside(object, object, interpreter, onGoing, args), sequence);
 			if(onGoing.shouldReturn()) return onGoing;
 		}
 		
@@ -111,7 +113,14 @@ public class ClassValue implements Value, Context, IInstanciable {
 	}
 	
 	public String toString() {
-		return "class " + name + "{\n"+("Static values = "+staticTable+"\n"+Arrays.toString(constructors)+"\n"+instanciateBody).indent(4)+"}";
+		String str = "class " + name + "{\n";
+		if(staticTable.size() != 0)
+			for(Entry<String, Value> entry : staticTable.entrySet())
+				str += ("static var "+entry.getKey() + " = "+entry.getValue()).indent(4) + "\n";
+		if(constructors.length != 0)
+			for(FunctionValue c:constructors)
+				str += ("constructor"+c.toString()).indent(4) + "\n";
+		return str + instanciateBody.toString().indent(4) + "}";
 	}
 
 }
