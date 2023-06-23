@@ -36,6 +36,8 @@ public class StringValue implements Value, IIterable {
 				return IntegerValue.get(Integer.parseInt(value));
 			else if(type == CastingType.FLOAT)
 				return new FloatValue(Float.parseFloat(value));
+			else if(type == CastingType.DOUBLE)
+				return new DoubleValue(Double.parseDouble(value));
 			else if(type == CastingType.BOOLEAN)
 				return BooleanValue.get(Boolean.parseBoolean(value));
 		} catch(Exception e) { return null; }
@@ -79,7 +81,7 @@ public class StringValue implements Value, IIterable {
 
 	@Override
 	public Value elementAt(int index) {
-		return new StringValue(value.charAt(index) + "");
+		return new CharValue(value.charAt(index));
 	}
 
 	@Override
