@@ -35,11 +35,7 @@ public interface Value {
 	public default Value unaryOperation(UnaryOperationType operation) { return operation == UnaryOperationType.NOT ? BooleanValue.get(!isTrue()) : null; }
 	
 	public default Value binaryOperation(BinaryOperationType operation, Value right) {
-		if(operation == BinaryOperationType.AND)
-			return BooleanValue.get(isTrue() && right.isTrue());
-		else if(operation == BinaryOperationType.OR)
-			return BooleanValue.get(isTrue() || right.isTrue());
-		else if(operation == BinaryOperationType.PLUS && right instanceof StringValue sv)
+		if(operation == BinaryOperationType.PLUS && right instanceof StringValue sv)
 			return new StringValue(toString() + sv.getValue());
 		else if(operation == BinaryOperationType.DOUBLE_EQUALS)
 			return BooleanValue.get(equalTo(right));

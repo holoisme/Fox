@@ -36,11 +36,6 @@ public class IntegerValue implements Value, INumber {
 	}
 	
 	public Value binaryOperation(BinaryOperationType operation, Value right) {
-		if(operation == BinaryOperationType.AND)
-			return BooleanValue.get(isTrue() && right.isTrue());
-		else if(operation == BinaryOperationType.OR)
-			return BooleanValue.get(isTrue() || right.isTrue());
-		
 		if(right instanceof INumber num) {
 			switch (operation) {
 				case PLUS:

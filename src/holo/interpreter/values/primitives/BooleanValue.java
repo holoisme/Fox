@@ -1,6 +1,5 @@
 package holo.interpreter.values.primitives;
 
-import holo.interpreter.types.BinaryOperationType;
 import holo.interpreter.types.UnaryOperationType;
 import holo.interpreter.values.Value;
 
@@ -23,15 +22,6 @@ public class BooleanValue implements Value {
 	
 	public Value unaryOperation(UnaryOperationType operation) {
 		return operation == UnaryOperationType.NOT ? get(!value) : null;
-	}
-	
-	public Value binaryOperation(BinaryOperationType operation, Value right) {
-		if(operation == BinaryOperationType.AND)
-			return get(value && right.isTrue());
-		else if(operation == BinaryOperationType.OR)
-			return get(value || right.isTrue());
-		
-		return Value.super.binaryOperation(operation, right);
 	}
 	
 	@Override
