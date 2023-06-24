@@ -5,7 +5,8 @@ import holo.lang.lexer.TokenType;
 
 public enum BinaryOperationType {
 	
-	PLUS("+"), MINUS("-"), MULTIPLY("*"), DIVIDE("/"), EXPONANT("^"), MODULO("%"), AND("and"), OR("or"),
+	PLUS("+"), MINUS("-"), MULTIPLY("*"), DIVIDE("/"), EXPONANT("^"), MODULO("%"),
+//	AND("and"), OR("or"),
 	DOUBLE_EQUALS("=="), NOT_EQUAL("!="), LESS_THAN("<"), GREATER_THAN(">"), LESS_OR_EQUAL("<="), GREATER_OR_EQUAL(">=");
 	
 	private String symbol;
@@ -33,8 +34,8 @@ public enum BinaryOperationType {
 		else if(type == TokenType.LESS_OR_EQUAL) return LESS_OR_EQUAL;
 		else if(type == TokenType.GREATER_OR_EQUAL) return GREATER_OR_EQUAL;
 		
-		else if(token.content().equals("and")) return AND;
-		else if(token.content().equals("or")) return OR;
+//		else if(token.content().equals("and")) return AND;
+//		else if(token.content().equals("or")) return OR;
 		
 		return null;
 	}
