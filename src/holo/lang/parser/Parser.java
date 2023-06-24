@@ -18,6 +18,7 @@ import holo.interpreter.nodes.helpers.ObligatoryDefinitionArgument;
 import holo.interpreter.nodes.helpers.SwitchCase;
 import holo.interpreter.nodes.helpers.SwitchMultiCaseRecord;
 import holo.interpreter.nodes.helpers.SwitchSingleCaseRecord;
+import holo.interpreter.nodes.operations.BinaryBooleanOperationNode;
 import holo.interpreter.nodes.operations.BinaryOperationNode;
 import holo.interpreter.nodes.operations.NullishOperationNode;
 import holo.interpreter.nodes.operations.TernaryOperationNode;
@@ -60,6 +61,7 @@ import holo.interpreter.nodes.var.VarAssignQuickOperationNode;
 import holo.interpreter.nodes.var.VarAssignmentNode;
 import holo.interpreter.nodes.var.VarDeclarationNode;
 import holo.interpreter.nodes.var.VarPointAccessNode;
+import holo.interpreter.types.BinaryBooleanOperationType;
 import holo.interpreter.types.BinaryOperationType;
 import holo.interpreter.types.CastingType;
 import holo.interpreter.types.QuickOperationType;
@@ -1425,7 +1427,7 @@ public class Parser {
 			Node right = pr.register(comp_unary());
 			if(pr.shouldReturn()) return pr;
 			
-			left = new BinaryOperationNode(BinaryOperationType.AND, left, right, since(sequence));
+			left = new BinaryBooleanOperationNode(BinaryBooleanOperationType.AND, left, right, since(sequence));
 		}
 		
 		return pr.success(left);
@@ -1443,7 +1445,7 @@ public class Parser {
 			Node right = pr.register(comp_binop_AND());
 			if(pr.shouldReturn()) return pr;
 			
-			left = new BinaryOperationNode(BinaryOperationType.OR, left, right, since(sequence));
+			left = new BinaryBooleanOperationNode(BinaryBooleanOperationType.OR, left, right, since(sequence));
 		}
 		
 		return pr.success(left);
