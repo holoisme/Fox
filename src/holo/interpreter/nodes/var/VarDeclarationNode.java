@@ -2,11 +2,11 @@ package holo.interpreter.nodes.var;
 
 import holo.errors.AlreadyExistingVariableError;
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TError;
 
 public record VarDeclarationNode(String varName, Node expression, Sequence sequence) implements Node {
 	
@@ -14,18 +14,15 @@ public record VarDeclarationNode(String varName, Node expression, Sequence seque
 		return "var " + varName + " = " + expression;
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
+	public Value interpret(Context parentContext, Interpreter interpreter) {
 		if(parentContext.contains(varName))
-			return onGoingRuntime.failure(new AlreadyExistingVariableError(varName, sequence));
+			throw new TError(new AlreadyExistingVariableError(varName, sequence));
 		
-		Value value = Value.NULL;
-		if(expression != null) {
-			value = onGoingRuntime.register(expression.interpret(parentContext, interpreter, onGoingRuntime), expression.sequence());
-			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
-		}
+		Value value = expression == null ? Value.NULL : expression.interpret(parentContext, interpreter);
 		
 		parentContext.setToThis(varName, value);
-		return onGoingRuntime.buffer(value);
+		
+		return value;
 	}
 	
 }

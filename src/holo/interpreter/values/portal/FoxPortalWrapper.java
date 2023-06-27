@@ -5,9 +5,9 @@ import java.lang.reflect.Method;
 
 import holo.errors.RuntimeError;
 import holo.errors.portal.NoSuchMethodError;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallHandler;
+import holo.transcendental.TError;
 
 public class FoxPortalWrapper implements Value, ICallHandler {
 	
@@ -49,7 +49,7 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 		}
 	}
 	
-	public RuntimeResult callMethod(RuntimeResult onGoing, String name, Value... args) {
+	public Value callMethod(String name, Value... args) {
 		Object[] convertedArgs = new Object[args.length];
 		Class<?>[] argsClasses = new Class<?>[args.length];
 		
@@ -61,12 +61,12 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 		try {
 			Method method = value.getClass().getMethod(name, argsClasses);
 			if(method == null || method.isAnnotationPresent(FoxIgnore.class))
-				return onGoing.failure(new NoSuchMethodError(name, argsClasses, typeName(), null));
+				throw new TError(new NoSuchMethodError(name, argsClasses, typeName(), null));
 			
 			Object returnedObject = method.invoke(value, convertedArgs);
 			
-			return onGoing.success(Value.convertJavaToFoxValue(returnedObject));
-		} catch (Exception e) { return onGoing.failure(new RuntimeError(e.getMessage(), null)); }
+			return Value.convertJavaToFoxValue(returnedObject);
+		} catch (Exception e) { throw new TError(new RuntimeError(e.getMessage(), null)); }
 	}
 
 	@Override

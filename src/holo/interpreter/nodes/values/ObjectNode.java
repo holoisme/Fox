@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.ReflectionUtils;
@@ -19,19 +18,15 @@ public record ObjectNode(ObjectStatementSequence[] statements, Sequence sequence
 		return "{ "+ReflectionUtils.toString(statements) + " }";
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
+	public Value interpret(Context parentContext, Interpreter interpreter) {
 		Map<String, Value> map = new HashMap<>();
 		
 		ObjectValue objectValue = new ObjectValue(map, parentContext);
 		
-		for(ObjectStatementSequence objectStatement: statements) {
-			Value element = onGoingRuntime.register(objectStatement.expression().interpret(objectValue, interpreter, onGoingRuntime), objectStatement.expression().sequence());
-			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
-			
-			map.put(objectStatement.name(), element);
-		}
+		for(ObjectStatementSequence objectStatement: statements)
+			map.put(objectStatement.name(), objectStatement.expression().interpret(objectValue, interpreter));
 		
-		return onGoingRuntime.buffer(objectValue);
+		return objectValue;
 	}
 	
 }

@@ -12,10 +12,12 @@ import holo.errors.ImportError;
 import holo.interpreter.contexts.FileInnerContext;
 import holo.interpreter.contexts.FileShellContext;
 import holo.interpreter.imports.Library;
+import holo.interpreter.values.Value;
 import holo.lang.lexer.Lexer;
 import holo.lang.lexer.LexerResult;
 import holo.lang.parser.ParseResult;
 import holo.lang.parser.Parser;
+import holo.transcendental.TError;
 
 public class Interpreter {
 	
@@ -56,11 +58,11 @@ public class Interpreter {
 		return loadedLibraries.get(name);
 	}
 	
-	public RuntimeResult execute(String path) {
+	public Value execute(String path) {
 		return execute(rootPath.resolve(path));
 	}
 	
-	public RuntimeResult execute(Path path) {
+	public Value execute(Path path) {
 		try {
 			long timer = System.currentTimeMillis();
 			LexerResult lexResult = Lexer.extract(path.toFile());
@@ -68,7 +70,7 @@ public class Interpreter {
 			
 			if(lexResult.hasError()) {
 				lexResult.error().display(errStream, lexResult.originalText());
-				return new RuntimeResult().failure(new ImportError(lexResult.error()));
+				throw new TError(new ImportError(lexResult.error()));
 			}
 			
 			Parser parser = new Parser(lexResult);
@@ -80,27 +82,27 @@ public class Interpreter {
 			FoxError error = parseResult.getError();
 			if(error != null) {
 				error.display(errStream, lexResult.originalText());
-				return new RuntimeResult().failure(new ImportError(error));
+				throw new TError(new ImportError(error));
 			}
 			
 			FileShellContext fileContext = new FileShellContext(path.getFileName().toString());
 			
-			printDebug("[Interpreter] Executing " + path.toFile().getName() + "...");
-			long startTime = System.currentTimeMillis();
-			RuntimeResult runtime = parseResult.node().interpret(fileContext.getInnerContext(), this, null);
-			printDebug("[Interpreter] Executed in " + (System.currentTimeMillis() - startTime) + "ms");
-			
-			loadedFiles.put(path, fileContext.getInnerContext());
-			
-			printDebug("\n" + runtime.toStringFull(path.toFile().getName()));
-			
-			if(runtime.hasError())
-				runtime.getError().display(errStream, lexResult.originalText());
-			
-			return runtime;
+			try {
+				printDebug("[Interpreter] Executing " + path.toFile().getName() + "...");
+				long startTime = System.currentTimeMillis();
+				Value value = parseResult.node().interpret(fileContext.getInnerContext(), this);
+				printDebug("[Interpreter] Executed in " + (System.currentTimeMillis() - startTime) + "ms");
+				
+				loadedFiles.put(path, fileContext.getInnerContext());
+				
+				return value;
+			} catch(TError t) {
+				t.error().display(errStream, lexResult.originalText());
+				throw t;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			return new RuntimeResult().failure(new IOError(e.getMessage(), null));
+			throw new TError(new IOError(e.getMessage(), null));
 		}
 	}
 	

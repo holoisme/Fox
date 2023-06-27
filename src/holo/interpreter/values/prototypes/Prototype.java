@@ -3,7 +3,6 @@ package holo.interpreter.values.prototypes;
 import java.util.HashMap;
 import java.util.Map;
 
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.functions.BuiltInFunctionValue;
 
@@ -30,8 +29,8 @@ public class Prototype<T> {
 	
 	@SuppressWarnings("unchecked")
 	protected void addFunction(String functionName, PrototypeCall<T> lambda, String... arguments) {
-		table.put(functionName, new BuiltInFunctionValue(functionName, (host, context, interpreter, onGoingRuntime, args) -> {
-			return lambda.call((T) host, onGoingRuntime, args);
+		table.put(functionName, new BuiltInFunctionValue(functionName, (host, context, interpreter, args) -> {
+			return lambda.call((T) host, args);
 		}, arguments));
 //		table.put(functionName, new BuiltInFunctionValue(functionName, (context, interpreter, args) -> {
 //			return null;
@@ -40,7 +39,7 @@ public class Prototype<T> {
 	}
 	
 	public interface PrototypeCall<T> {
-		public RuntimeResult call(T self, RuntimeResult onGoingRuntime, Value... args);
+		public Value call(T self, Value... args);
 	}
 	
 }

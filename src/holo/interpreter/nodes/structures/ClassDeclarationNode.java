@@ -3,7 +3,6 @@ package holo.interpreter.nodes.structures;
 import holo.errors.AlreadyExistingVariableError;
 import holo.errors.RuntimeError;
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.helpers.ClassDeclarationBody;
@@ -11,6 +10,7 @@ import holo.interpreter.values.Value;
 import holo.interpreter.values.functions.FunctionValue;
 import holo.interpreter.values.objects.ClassValue;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TError;
 
 public record ClassDeclarationNode(String name, ClassDeclarationBody body, Sequence sequence) implements Node {
 	
@@ -20,29 +20,27 @@ public record ClassDeclarationNode(String name, ClassDeclarationBody body, Seque
 	}
 	
 	@Override
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
+	public Value interpret(Context parentContext, Interpreter interpreter) {
 		if(parentContext.contains(name))
-			return onGoingRuntime.failure(new AlreadyExistingVariableError(name, sequence));
+			throw new TError(new AlreadyExistingVariableError(name, sequence));
 		
 		FunctionValue[] constructors = new FunctionValue[body.constructors().length];
 		
 		ClassValue classValue = new ClassValue(name, parentContext, constructors, body.instanciateBody());
 		
 		for(int i = 0; i < constructors.length; i++) {
-			Value constructorValue = onGoingRuntime.register(body.constructors()[i].interpret(classValue /*TODO verify*/, interpreter, onGoingRuntime), body.constructors()[i].sequence());
+			Value constructorValue = body.constructors()[i].interpret(classValue, interpreter);
 			if(constructorValue instanceof FunctionValue fn)
 				constructors[i] = fn;
-			else return onGoingRuntime.failure(new RuntimeError("Expecting a function value for constructor " + body.constructors()[i], sequence));
+			else throw new TError(new RuntimeError("Expecting a function value for constructor " + body.constructors()[i], sequence));
 		}
 		
-		for(Node staticNode:body.staticDeclarations()) {
-			onGoingRuntime.register(staticNode.interpret(classValue, interpreter, onGoingRuntime), staticNode.sequence());
-			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
-		}
+		for(Node staticNode:body.staticDeclarations())
+			staticNode.interpret(classValue, interpreter);
 		
 		parentContext.setToThis(name, classValue);
 		
-		return onGoingRuntime.buffer(classValue);
+		return classValue;
 	}
 
 }

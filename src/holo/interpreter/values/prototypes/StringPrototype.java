@@ -5,6 +5,7 @@ import holo.interpreter.values.interfaces.INumber;
 import holo.interpreter.values.primitives.CharValue;
 import holo.interpreter.values.primitives.IntegerValue;
 import holo.interpreter.values.primitives.StringValue;
+import holo.transcendental.TError;
 
 public class StringPrototype  {
 
@@ -13,14 +14,14 @@ public class StringPrototype  {
 	static {
 		PROTOTYPE = new Prototype<>("String");
 		
-		PROTOTYPE.addFunction("length", (self, runtime, args) -> {
-			return runtime.buffer(IntegerValue.get(self.length()));
+		PROTOTYPE.addFunction("length", (self, args) -> {
+			return IntegerValue.get(self.length());
 		});
 		
-		PROTOTYPE.addFunction("charAt", (self, runtime, args) -> {
+		PROTOTYPE.addFunction("charAt", (self, args) -> {
 			if(args[0] instanceof INumber num)
-				return runtime.buffer(new CharValue(self.getValue().charAt(num.getInteger())));
-			return runtime.failure(new WrongTypeError("number", args[0].toString(), null));
+				return new CharValue(self.getValue().charAt(num.getInteger()));
+			throw new TError(new WrongTypeError("number", args[0].toString(), null));
 		}, "index");
 		
 //		PROTOTYPE.addFunction("size", 0, (self, args) -> {

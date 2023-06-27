@@ -1,12 +1,12 @@
 package holo.interpreter.values.interfaces;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
+import holo.interpreter.nodes.helpers.args.NamedValue;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
 public interface IInstanciable {
 	
-	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Sequence sequence, Value... args);
+	public Value createInstance(Interpreter interpreter, Sequence sequence, Value[] args, NamedValue[] optionalArguments);
 	
 }

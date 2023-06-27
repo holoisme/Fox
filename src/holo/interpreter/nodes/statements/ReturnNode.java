@@ -1,11 +1,11 @@
 package holo.interpreter.nodes.statements;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TReturn;
 
 public record ReturnNode(Node expression, Sequence sequence) implements Node {
 	
@@ -13,14 +13,8 @@ public record ReturnNode(Node expression, Sequence sequence) implements Node {
 		return "return " + (expression!=null?expression:"");
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		Value valueToReturn = Value.NULL;
-		if(expression != null) {
-			valueToReturn = onGoingRuntime.register(expression.interpret(parentContext, interpreter, onGoingRuntime), expression.sequence());
-			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
-		}
-		
-		return onGoingRuntime.encounterReturn(valueToReturn);
+	public Value interpret(Context parentContext, Interpreter interpreter) {
+		throw new TReturn(expression == null ? Value.NULL : expression.interpret(parentContext, interpreter));
 	}
 	
 }

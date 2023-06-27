@@ -2,11 +2,11 @@ package holo.interpreter.nodes.statements;
 
 import holo.errors.AssertionError;
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TError;
 
 public record AssertNode(Node condition, Sequence sequence) implements Node {
 
@@ -15,14 +15,13 @@ public record AssertNode(Node condition, Sequence sequence) implements Node {
 	}
 	
 	@Override
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		Value value = onGoingRuntime.register(condition.interpret(parentContext, interpreter, onGoingRuntime), condition.sequence());
-		if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
+	public Value interpret(Context parentContext, Interpreter interpreter) {
+		Value value = condition.interpret(parentContext, interpreter);
 		
 		if(!value.isTrue())
-			return onGoingRuntime.failure(new AssertionError("Condition " + condition.toString() + " should be true", condition.sequence()));
+			throw new TError(new AssertionError("Condition " + condition.toString() + " should be true", condition.sequence()));
 		
-		return onGoingRuntime.success(value);
+		return value;
 	}
 
 }

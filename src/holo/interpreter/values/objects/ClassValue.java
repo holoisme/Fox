@@ -1,20 +1,20 @@
 package holo.interpreter.values.objects;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import holo.errors.ConstructorNotFoundError;
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.helpers.args.NamedValue;
 import holo.interpreter.nodes.structures.MultiStatementsNode;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.functions.FunctionValue;
 import holo.interpreter.values.interfaces.IInstanciable;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TError;
 
 public class ClassValue implements Value, Context, IInstanciable {
 	
@@ -55,7 +55,7 @@ public class ClassValue implements Value, Context, IInstanciable {
 	
 	public boolean equalTo(Value other) { return this.equals(other); }
 	
-	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Sequence sequence, Value... args) {
+	public Value createInstance(Interpreter interpreter, Sequence sequence, Value[] args, NamedValue[] optionalArguments) {
 		FunctionValue choosenConstructor = null;
 		for(FunctionValue con:constructors) {
 			if(con.numberOfArguments() == args.length) {
@@ -65,21 +65,17 @@ public class ClassValue implements Value, Context, IInstanciable {
 		}
 		
 		if(choosenConstructor == null && (constructors.length != 0 || args.length > 0))
-			return onGoing.failure(new ConstructorNotFoundError(name, args.length, sequence));
+			throw new TError(new ConstructorNotFoundError(name, args.length, sequence));
 		
 		ConstructedObjectValue object = new ConstructedObjectValue(name, this);
 		
-		for(Node node:instanciateBody.statements()) {
-			onGoing.register(node.interpret(object, interpreter, onGoing), sequence);
-			if(onGoing.shouldReturn()) return onGoing;
-		}
+		for(Node node:instanciateBody.statements())
+			node.interpret(object, interpreter);
 		
-		if(choosenConstructor != null) {
-			onGoing.register(choosenConstructor.callInside(object, object, interpreter, onGoing, args), sequence);
-			if(onGoing.shouldReturn()) return onGoing;
-		}
+		if(choosenConstructor != null)
+			choosenConstructor.callInside(object, object, interpreter, args, optionalArguments);
 		
-		return onGoing.buffer(object);
+		return object;
 	}
 
 	@Override

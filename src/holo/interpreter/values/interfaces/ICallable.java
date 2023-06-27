@@ -1,13 +1,13 @@
 package holo.interpreter.values.interfaces;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
+import holo.interpreter.nodes.helpers.args.NamedValue;
 import holo.interpreter.values.Value;
 
 public interface ICallable {
 	
-	public RuntimeResult call(Value host, Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime, Value... args);
+	public Value call(Value host, Context parentContext, Interpreter interpreter, Value[] args, NamedValue[] optionalArguments);
 	public int numberOfArguments();
 	
 }

@@ -1,8 +1,8 @@
 package holo.interpreter.nodes.helpers;
 
-import holo.interpreter.nodes.FunctionExpressionNode;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.structures.MultiStatementsNode;
+import holo.interpreter.nodes.values.FunctionExpressionNode;
 
 public record ClassDeclarationBody(FunctionExpressionNode[] constructors, Node[] staticDeclarations, MultiStatementsNode instanciateBody) {
 

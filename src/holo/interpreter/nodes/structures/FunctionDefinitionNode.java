@@ -1,10 +1,9 @@
 package holo.interpreter.nodes.structures;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
-import holo.interpreter.nodes.FunctionExpressionNode;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.nodes.values.FunctionExpressionNode;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
@@ -14,15 +13,12 @@ public record FunctionDefinitionNode(String name, FunctionExpressionNode functio
 		return "function"+ (name==null?"":" " + name) + functionExpression;
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		RuntimeResult rt = new RuntimeResult();
-		
-		Value value = rt.register(functionExpression.interpret(parentContext, interpreter, rt), functionExpression.sequence());
-		if(rt.shouldReturn()) return rt;
+	public Value interpret(Context parentContext, Interpreter interpreter) {
+		Value value = functionExpression.interpret(parentContext, interpreter);
 		
 		parentContext.setToThis(name, value);
 		
-		return rt.success(value);
+		return value;
 	}
 	
 }

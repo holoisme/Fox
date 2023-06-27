@@ -10,12 +10,12 @@ public class ListPrototype  {
 	static {
 		PROTOTYPE = new Prototype<>("List");
 		
-		PROTOTYPE.addFunction("size", (self, runtime, args) -> {
-			return runtime.buffer(IntegerValue.get(self.size()));
+		PROTOTYPE.addFunction("size", (self, args) -> {
+			return IntegerValue.get(self.size());
 		});
 		
-		PROTOTYPE.addFunction("add", (self, runtime, args) -> {
-			return runtime.buffer(self.addElement(args[0]));
+		PROTOTYPE.addFunction("add", (self, args) -> {
+			return self.addElement(args[0]);
 		}, "val");
 	}
 	

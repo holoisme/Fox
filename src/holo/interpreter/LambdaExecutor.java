@@ -5,6 +5,6 @@ import holo.interpreter.values.Value;
 
 public interface LambdaExecutor {
 	
-	public RuntimeResult call(Value host, Context context, Interpreter interpreter, RuntimeResult onGoingRuntime, Value... args);
+	public Value call(Value host, Context context, Interpreter interpreter, Value... args);
 	
 }

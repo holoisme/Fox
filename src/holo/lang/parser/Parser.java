@@ -5,19 +5,19 @@ import java.util.Arrays;
 import java.util.List;
 
 import holo.errors.SyntaxError;
-import holo.interpreter.nodes.FunctionExpressionNode;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.calls.CallNode;
 import holo.interpreter.nodes.calls.NewInstanceCallNode;
 import holo.interpreter.nodes.helpers.ClassDeclarationBody;
 import holo.interpreter.nodes.helpers.ConditionnedSequence;
-import holo.interpreter.nodes.helpers.DefinitionArgument;
 import holo.interpreter.nodes.helpers.EnumEntry;
 import holo.interpreter.nodes.helpers.ObjectStatementSequence;
-import holo.interpreter.nodes.helpers.ObligatoryDefinitionArgument;
 import holo.interpreter.nodes.helpers.SwitchCase;
 import holo.interpreter.nodes.helpers.SwitchMultiCaseRecord;
 import holo.interpreter.nodes.helpers.SwitchSingleCaseRecord;
+import holo.interpreter.nodes.helpers.args.NamedNode;
+import holo.interpreter.nodes.helpers.args.ObligatoryDefinitionArgument;
+import holo.interpreter.nodes.helpers.args.OptionalDefinitionArgument;
 import holo.interpreter.nodes.operations.BinaryBooleanOperationNode;
 import holo.interpreter.nodes.operations.BinaryOperationNode;
 import holo.interpreter.nodes.operations.NullishOperationNode;
@@ -45,13 +45,12 @@ import holo.interpreter.nodes.structures.WhileNode;
 import holo.interpreter.nodes.values.CastingNode;
 import holo.interpreter.nodes.values.CharacterNode;
 import holo.interpreter.nodes.values.DefaultValueNode;
-import holo.interpreter.nodes.values.DoubleNode;
-import holo.interpreter.nodes.values.FloatNode;
-import holo.interpreter.nodes.values.IntegerNode;
+import holo.interpreter.nodes.values.FunctionExpressionNode;
 import holo.interpreter.nodes.values.ListNode;
 import holo.interpreter.nodes.values.ObjectNode;
 import holo.interpreter.nodes.values.StringNode;
 import holo.interpreter.nodes.values.ThisNode;
+import holo.interpreter.nodes.values.ValueNode;
 import holo.interpreter.nodes.var.MultiVarDeclarationNode;
 import holo.interpreter.nodes.var.OptionalChainingNode;
 import holo.interpreter.nodes.var.VarAccessNode;
@@ -68,6 +67,9 @@ import holo.interpreter.types.QuickOperationType;
 import holo.interpreter.types.UnaryOperationType;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.BooleanValue;
+import holo.interpreter.values.primitives.DoubleValue;
+import holo.interpreter.values.primitives.FloatValue;
+import holo.interpreter.values.primitives.IntegerValue;
 import holo.lang.lexer.LexerResult;
 import holo.lang.lexer.Sequence;
 import holo.lang.lexer.Token;
@@ -97,19 +99,22 @@ public class Parser {
 		if(matches(TokenType.INTEGER)) {
 			Token token = currentToken;
 			advance(pr);
-			return pr.success(new IntegerNode(Integer.parseInt(token.content()), token.sequence()));
+			return pr.success(new ValueNode(IntegerValue.get(Integer.parseInt(token.content())), token.sequence()));
+//			return pr.success(new IntegerNode(Integer.parseInt(token.content()), token.sequence()));
 		}
 		
 		if(matches(TokenType.FLOAT)) {
 			Token token = currentToken;
 			advance(pr);
-			return pr.success(new FloatNode(Float.parseFloat(token.content()), token.sequence()));
+			return pr.success(new ValueNode(new FloatValue(Float.parseFloat(token.content())), token.sequence()));
+//			return pr.success(new FloatNode(Float.parseFloat(token.content()), token.sequence()));
 		}
 		
 		if(matches(TokenType.DOUBLE)) {
 			Token token = currentToken;
 			advance(pr);
-			return pr.success(new DoubleNode(Double.parseDouble(token.content()), token.sequence()));
+			return pr.success(new ValueNode(new DoubleValue(Double.parseDouble(token.content())), token.sequence()));
+//			return pr.success(new DoubleNode(Double.parseDouble(token.content()), token.sequence()));
 		}
 		
 		if(matches(TokenType.CHARACTER)) {
@@ -978,17 +983,26 @@ public class Parser {
 		if(pr.shouldReturn()) return pr;
 		advance(pr);
 		
-		List<DefinitionArgument> args = new ArrayList<>();
+		List<ObligatoryDefinitionArgument> regularArgs = new ArrayList<>();
+		List<OptionalDefinitionArgument> optionalArgs = new ArrayList<>();
 		
 		if(!matches(TokenType.RIGHT_PARENTHESE)) do {
-			if(args.size() != 0)
+			if(regularArgs.size() != 0 || optionalArgs.size() != 0)
 				advance(pr);
 			
 			Token arg = extract(pr, TokenType.IDENTIFIER);
 			if(pr.shouldReturn()) return pr;
 			advance(pr);
 			
-			args.add(new DefinitionArgument(new ObligatoryDefinitionArgument(arg.content()), arg.sequence()));
+			if(matches(TokenType.EQUALS)) {
+				advance(pr);
+				
+				Node expression = pr.register(expression());
+				if(pr.shouldReturn()) return pr;
+				
+				optionalArgs.add(new OptionalDefinitionArgument(arg.content(), expression, arg.sequence()));
+			} else regularArgs.add(new ObligatoryDefinitionArgument(arg.content(), arg.sequence()));
+			
 		} while(matches(TokenType.COMMA));
 		
 		check(pr, TokenType.RIGHT_PARENTHESE);
@@ -1012,7 +1026,7 @@ public class Parser {
 			if(pr.shouldReturn()) return pr;
 		} else pr.failure(new SyntaxError(currentToken));
 		
-		FunctionExpressionNode functionExpression = new FunctionExpressionNode(args.toArray(new DefinitionArgument[args.size()]), body, since(sequence));
+		FunctionExpressionNode functionExpression = new FunctionExpressionNode(regularArgs.toArray(new ObligatoryDefinitionArgument[regularArgs.size()]), optionalArgs.toArray(new OptionalDefinitionArgument[optionalArgs.size()]), body, since(sequence));
 		
 		if(name == null || !allowName)
 			return pr.success(functionExpression);
@@ -1066,7 +1080,6 @@ public class Parser {
 			}
 //			if(statements.size() != 0)
 //				advance(pr);
-//			System.out.println(currentToken);
 			
 			Sequence objectStatementSequence = sequence();
 			
@@ -1153,19 +1166,28 @@ public class Parser {
 		if(pr.shouldReturn()) return pr;
 		advance(pr);
 		
-		List<DefinitionArgument> args = new ArrayList<>();
+		List<ObligatoryDefinitionArgument> regularArgs = new ArrayList<>();
+		List<OptionalDefinitionArgument> optionalArgs = new ArrayList<>();
 		
 		if(!matches(TokenType.RIGHT_PARENTHESE)) do {
-			if(args.size() != 0) {
-				pr.commit();
+			if(regularArgs.size() != 0 || optionalArgs.size() != 0)
 				advance(pr);
-			}
 			
 			Token arg = extract(pr, TokenType.IDENTIFIER);
 			if(pr.shouldReturn()) return pr;
 			advance(pr);
 			
-			args.add(new DefinitionArgument(new ObligatoryDefinitionArgument(arg.content()), arg.sequence()));
+			if(matches(TokenType.EQUALS)) {
+				advance(pr);
+				
+				Node expression = pr.register(expression());
+				if(pr.shouldReturn()) return pr;
+				
+				optionalArgs.add(new OptionalDefinitionArgument(arg.content(), expression, arg.sequence()));
+				continue;
+			}
+			
+			regularArgs.add(new ObligatoryDefinitionArgument(arg.content(), arg.sequence()));
 		} while(matches(TokenType.COMMA));
 		
 		check(pr, TokenType.RIGHT_PARENTHESE);
@@ -1190,7 +1212,8 @@ public class Parser {
 			body = new ReturnNode(expression, since(returnSequence));
 		}
 		
-		return pr.success(new FunctionExpressionNode(args.toArray(new DefinitionArgument[args.size()]), body, since(sequence)));
+		return pr.success(new FunctionExpressionNode(regularArgs.toArray(new ObligatoryDefinitionArgument[regularArgs.size()]), optionalArgs.toArray(new OptionalDefinitionArgument[optionalArgs.size()]), body, since(sequence)));
+//		return pr.success(new FunctionExpressionNode(args.toArray(new DefinitionArgument[args.size()]), body, since(sequence)));
 	}
 	
 	private ParseResult access(boolean canFinishOnACall) {
@@ -1239,24 +1262,48 @@ public class Parser {
 				isLastCall = true;
 				
 				List<Node> args = new ArrayList<>();
+				List<NamedNode> optionalArgs = new ArrayList<>();
 				
 				do {
 					if(matches(TokenType.RIGHT_PARENTHESE))
 						break;
-					if(args.size() != 0)
+					if(args.size() != 0  || optionalArgs.size() != 0)
 						advance(pr);
+					
+//					if(matches(TokenType.IDENTIFIER)) {
+//						ParseResult optPr = new ParseResult();
+//						String name = currentToken.content();
+//						
+//						advance(optPr);
+//						if(matches(TokenType.EQUALS)) {
+//							optPr.commit();
+//							advance(optPr);
+//							
+//							Node temp = optPr.register(expression());
+//							if(optPr.shouldReturn()) return optPr;
+//							
+//							optionalArgs.add(new NamedNode(name, temp));
+//							pr.register(optPr);
+//							continue;
+//						} else reverse(optPr);
+//					}
+					
+					boolean startWithIdentifier = matches(TokenType.IDENTIFIER);
 					
 					Node temp = pr.register(expression());
 					if(pr.shouldReturn()) return pr;
 					
-					args.add(temp);
+					if(startWithIdentifier && temp instanceof VarAssignmentNode assign && assign.access() instanceof VarAccessNode access) {
+						optionalArgs.add(new NamedNode(access.varName(), assign.expression()));
+					} else args.add(temp);
+					
 				} while(matches(TokenType.COMMA));
 				
 				check(pr, TokenType.RIGHT_PARENTHESE);
 				if(pr.shouldReturn()) return pr;
 				advance(pr);
 				
-				expr = new CallNode(expr, args.toArray(new Node[args.size()]), since(sequence));
+				expr = new CallNode(expr, args.toArray(new Node[args.size()]), optionalArgs.toArray(new NamedNode[optionalArgs.size()]), since(sequence));
 			}
 		}
 		

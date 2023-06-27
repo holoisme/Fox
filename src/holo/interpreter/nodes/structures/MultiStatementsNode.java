@@ -1,7 +1,6 @@
 package holo.interpreter.nodes.structures;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.SimpleContext;
 import holo.interpreter.nodes.Node;
@@ -17,17 +16,20 @@ public record MultiStatementsNode(Node[] statements, Sequence sequence) implemen
 		return "{\n" + body.indent(4) + "}";
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		RuntimeResult rt = new RuntimeResult();
-		
+	public Value interpret(Context parentContext, Interpreter interpreter) {
 		Context context = new SimpleContext(parentContext.getName() + " child", parentContext);
 		
-		for(Node statementNode:statements()) {
-			rt.register(statementNode.interpret(context, interpreter, rt), context.getName(), statementNode.sequence());
-			if(rt.shouldReturn()) return rt;
-		}
+		for(Node statementNode:statements())
+			statementNode.interpret(context, interpreter);
 		
-		return rt.success(Value.NULL);
+		return Value.NULL;
+	}
+	
+	public Value interpretTransparently(Context parentContext, Interpreter interpreter) {
+		for(Node statementNode:statements())
+			statementNode.interpret(parentContext, interpreter);
+		
+		return Value.NULL;
 	}
 	
 }

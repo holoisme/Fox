@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
-import holo.interpreter.contexts.SimpleContext;
+import holo.interpreter.contexts.IterationContext;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.ListValue;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TBreak;
+import holo.transcendental.TContinue;
 
 public record ForNode(Node initialization, Node condition, Node step, Node body, Sequence sequence) implements Node {
 	
@@ -18,59 +19,38 @@ public record ForNode(Node initialization, Node condition, Node step, Node body,
 		return "for("+initialization+"; " + condition + "; " + step+"): " + body;
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		RuntimeResult rt = new RuntimeResult();
+	public Value interpret(Context parentContext, Interpreter interpreter) {
+		IterationContext forContext = new IterationContext(parentContext);
 		
-		Context forContext = new SimpleContext("For", parentContext);
+		if(initialization != null)
+			initialization.interpret(forContext, interpreter);
 		
-		if(initialization != null) {
-			rt.register(initialization.interpret(forContext, interpreter, rt), initialization.sequence());
-			if(rt.shouldReturn()) return rt;
-		}
-		
-		boolean shortForm = !(body instanceof MultiStatementsNode);
-		
-		if(shortForm) {
-			List<Value> computedValues = new ArrayList<>();
-			
-			while(rt.register(condition.interpret(forContext, interpreter, rt), condition.sequence()).isTrue()) {
-				if(rt.shouldReturn()) return rt;
+		if(body instanceof MultiStatementsNode) {
+			while(condition.interpret(forContext, interpreter).isTrue()) {
 				
-				Value bodyValue = rt.register(body.interpret(forContext, interpreter, rt), sequence);
-				if(rt.shouldReturn()) return rt;
-				
-				computedValues.add(bodyValue);
-				
-				rt.register(step.interpret(forContext, interpreter, rt), step.sequence());
-			}
-			
-			return rt.success(new ListValue(computedValues));
-		} else {
-			while(rt.register(condition.interpret(forContext, interpreter, rt), condition.sequence()).isTrue()) {
-				
-				if(rt.shouldReturn()) return rt;
-				
-				rt.register(body.interpret(forContext, interpreter, rt), sequence);
-				
-				if(rt.hasError() || rt.hasReturnValue()) return rt;
-				
-				if(rt.encounteredBreak()) {
-					rt.disableBreak();
+				try {
+					body.interpret(forContext, interpreter);
+				} catch(TBreak t) {
 					break;
-				}
-				
-				if(rt.encounteredContinue()) {
-					rt.disableContinue();
-					rt.register(step.interpret(forContext, interpreter, rt), step.sequence());
+				} catch(TContinue t) {
+					step.interpret(forContext, interpreter);
 					continue;
 				}
 				
-				rt.register(step.interpret(forContext, interpreter, rt), step.sequence());
-				
-				if(rt.shouldReturn()) return rt;
+				step.interpret(forContext, interpreter);
 			}
 			
-			return rt.success(Value.NULL);
+			return Value.NULL;
+		} else {
+			List<Value> computedValues = new ArrayList<>();
+			
+			while(condition.interpret(forContext, interpreter).isTrue()) {
+				computedValues.add(body.interpret(forContext, interpreter));
+				
+				step.interpret(forContext, interpreter);
+			}
+			
+			return new ListValue(computedValues);
 		}
 	}
 	

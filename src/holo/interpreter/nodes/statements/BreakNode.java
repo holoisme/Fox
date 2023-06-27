@@ -1,10 +1,11 @@
 package holo.interpreter.nodes.statements;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TBreak;
 
 public record BreakNode(Sequence sequence) implements Node {
 	
@@ -12,8 +13,8 @@ public record BreakNode(Sequence sequence) implements Node {
 		return "break";
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		return onGoingRuntime.encounterBreak();
+	public Value interpret(Context parentContext, Interpreter interpreter) {
+		throw TBreak.BREAK;
 	}
 	
 }

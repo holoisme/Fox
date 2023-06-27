@@ -1,7 +1,6 @@
 package holo.interpreter.nodes.structures;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.helpers.ConditionnedSequence;
@@ -19,28 +18,19 @@ public record IfNode(ConditionnedSequence[] conditions, Node elseBodyNode, Seque
 		return str;
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		RuntimeResult rt = new RuntimeResult();
+	public Value interpret(Context parentContext, Interpreter interpreter) {
 		
 		for(ConditionnedSequence conditionnedSequence:conditions) {
-			Value conditionValue = rt.register(conditionnedSequence.condition().interpret(parentContext, interpreter, rt), conditionnedSequence.condition().sequence());
-			if(rt.shouldReturn()) return rt;
+			Value conditionValue = conditionnedSequence.condition().interpret(parentContext, interpreter);
 			
-			if(conditionValue.isTrue()) {
-				Value valueToReturn = rt.register(conditionnedSequence.body().interpret(parentContext, interpreter, rt), conditionnedSequence.body().sequence());
-				if(rt.shouldReturn()) return rt;
-				
-				return rt.success(valueToReturn);
-			}
+			if(conditionValue.isTrue())
+				return conditionnedSequence.body().interpret(parentContext, interpreter);
 		}
 		
 		if(elseBodyNode == null)
-			return rt.success(Value.NULL);
+			return Value.NULL;
 		
-		Value elseValueToReturn = rt.register(elseBodyNode.interpret(parentContext, interpreter, rt), elseBodyNode.sequence());
-		if(rt.shouldReturn()) return rt;
-		
-		return rt.success(elseValueToReturn);
+		return elseBodyNode.interpret(parentContext, interpreter);
 	}
 	
 }

@@ -10,11 +10,12 @@ import java.util.Map;
 import holo.errors.RuntimeError;
 import holo.errors.portal.NoSuchMethodError;
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
+import holo.interpreter.nodes.helpers.args.NamedValue;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallHandler;
 import holo.interpreter.values.interfaces.IInstanciable;
 import holo.lang.lexer.Sequence;
+import holo.transcendental.TError;
 
 public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	
@@ -35,7 +36,7 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	}
 
 	@Override
-	public RuntimeResult createInstance(Interpreter interpreter, RuntimeResult onGoing, Sequence sequence, Value... args) {
+	public Value createInstance(Interpreter interpreter, Sequence sequence, Value[] args, NamedValue[] optionalValues) {
 		Object[] convertedArgs = new Object[args.length];
 		Class<?>[] argsClasses = new Class<?>[args.length];
 		
@@ -48,9 +49,9 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 			Constructor<?> constructor = cl.getConstructor(argsClasses);
 			
 			Object instance = constructor.newInstance(convertedArgs);
-			return onGoing.buffer(Value.convertJavaToFoxValue(instance));
+			return Value.convertJavaToFoxValue(instance);
 		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			return onGoing.failure(new RuntimeError(e.getMessage(), null));
+			throw new TError(new RuntimeError(e.getMessage(), null));
 		}
 	}
 
@@ -105,7 +106,7 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	}
 
 	@Override
-	public RuntimeResult callMethod(RuntimeResult onGoing, String name, Value... args) {
+	public Value callMethod(String name, Value... args) {
 		Object[] convertedArgs = new Object[args.length];
 		Class<?>[] argsClasses = new Class<?>[args.length];
 		
@@ -117,12 +118,12 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 		try {
 			Method method = cl.getMethod(name, argsClasses);
 			if(method == null || method.isAnnotationPresent(FoxIgnore.class))
-				return onGoing.failure(new NoSuchMethodError(name, argsClasses, typeName(), null));
+				throw new TError(new NoSuchMethodError(name, argsClasses, typeName(), null));
 			
 			Object returnedObject = method.invoke(null, convertedArgs);
 			
-			return onGoing.success(Value.convertJavaToFoxValue(returnedObject));
-		} catch (Exception e) { return onGoing.failure(new RuntimeError(e.getMessage(), null)); }
+			return Value.convertJavaToFoxValue(returnedObject);
+		} catch (Exception e) { throw new TError(new RuntimeError(e.getMessage(), null)); }
 	}
 	
 }

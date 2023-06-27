@@ -3,9 +3,9 @@ package holo.interpreter.nodes;
 import java.util.Arrays;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.helpers.ExtractFromObjectInstance;
+import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
 public record ExtractFromObjectNode(ExtractFromObjectInstance[] instances, Node fromExpression, Sequence sequence) implements Node {
@@ -15,7 +15,7 @@ public record ExtractFromObjectNode(ExtractFromObjectInstance[] instances, Node 
 	}
 
 	@Override
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
+	public Value interpret(Context parentContext, Interpreter interpreter) {
 		// TODO Auto-generated method stub
 		return null;
 	}

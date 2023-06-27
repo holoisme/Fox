@@ -13,12 +13,12 @@ public class EnumClassPrototype {
 	static {
 		PROTOTYPE = new Prototype<>("Enum class");
 		
-		PROTOTYPE.addFunction("values", (self, runtime, args) -> {
-			return runtime.buffer(new ListValue( new ArrayList<>(self.getEntries().values()) ));
+		PROTOTYPE.addFunction("values", (self, args) -> {
+			return new ListValue( new ArrayList<>(self.getEntries().values()) );
 		});
 		
-		PROTOTYPE.addFunction("length", (self, runtime, args) -> {
-			return runtime.buffer(IntegerValue.get(self.getEntries().size()));
+		PROTOTYPE.addFunction("length", (self, args) -> {
+			return IntegerValue.get(self.getEntries().size());
 		});
 	}
 	

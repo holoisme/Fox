@@ -1,7 +1,6 @@
 package holo.interpreter.nodes.operations;
 
 import holo.interpreter.Interpreter;
-import holo.interpreter.RuntimeResult;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.types.BinaryBooleanOperationType;
@@ -15,29 +14,22 @@ public record BinaryBooleanOperationNode(BinaryBooleanOperationType operation, N
 		return left + " " + operation.toString() + " " + right;
 	}
 	
-	public RuntimeResult interpret(Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime) {
-		Value leftValue = onGoingRuntime.register(left.interpret(parentContext, interpreter, onGoingRuntime), left.sequence());
-		if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
+	public Value interpret(Context parentContext, Interpreter interpreter) {
+		Value leftValue = left.interpret(parentContext, interpreter);
 		
 		if(operation == BinaryBooleanOperationType.AND) {
 			if(!leftValue.isTrue())
-				return onGoingRuntime.buffer(BooleanValue.FALSE);
+				return BooleanValue.FALSE;
 			
-			Value rightValue = onGoingRuntime.register(right.interpret(parentContext, interpreter, onGoingRuntime), right.sequence());
-			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
-			
-			return onGoingRuntime.buffer(BooleanValue.get(leftValue.isTrue() && rightValue.isTrue()));
+			return BooleanValue.get(right.interpret(parentContext, interpreter).isTrue());
 		} else if(operation == BinaryBooleanOperationType.OR) {
 			if(leftValue.isTrue())
-				return onGoingRuntime.buffer(BooleanValue.TRUE);
+				return BooleanValue.TRUE;
 			
-			Value rightValue = onGoingRuntime.register(right.interpret(parentContext, interpreter, onGoingRuntime), right.sequence());
-			if(onGoingRuntime.shouldReturn()) return onGoingRuntime;
-			
-			return onGoingRuntime.buffer(BooleanValue.get(leftValue.isTrue() || rightValue.isTrue()));
+			return BooleanValue.get(right.interpret(parentContext, interpreter).isTrue());
 		}
 		
-		return onGoingRuntime.buffer(Value.NULL);
+		return Value.NULL;
 	}
 	
 }

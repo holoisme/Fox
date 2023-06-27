@@ -9,6 +9,10 @@ public class SyntaxError extends FoxError {
 	
 	public SyntaxError(Token token) {
 		super("Syntax Error", token.sequence());
+		
+//		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+//		System.out.println(ReflectionUtils.toString(stackTraceElements));
+		
 		this.token = token;
 		this.expected = null;
 	}

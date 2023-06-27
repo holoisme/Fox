@@ -11,12 +11,12 @@ public class EnumEntryPrototype {
 	static {
 		PROTOTYPE = new Prototype<>("List");
 		
-		PROTOTYPE.addFunction("name", (self, runtime, args) -> {
-			return runtime.buffer(new StringValue(self.name()));
+		PROTOTYPE.addFunction("name", (self, args) -> {
+			return new StringValue(self.name());
 		});
 		
-		PROTOTYPE.addFunction("ordinal", (self, runtime, args) -> {
-			return runtime.buffer(IntegerValue.get(self.ordinal()));
+		PROTOTYPE.addFunction("ordinal", (self, args) -> {
+			return IntegerValue.get(self.ordinal());
 		});
 	}
 	

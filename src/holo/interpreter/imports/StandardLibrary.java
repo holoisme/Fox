@@ -8,17 +8,17 @@ import holo.interpreter.values.primitives.IntegerValue;
 public class StandardLibrary implements Library {
 	
 	public void populate(Context fileContext) {
-		fileContext.addBuiltInFunction(new BuiltInFunctionValue("print", (host, context, interpreter, onGoingRuntime, args) -> {
+		fileContext.addBuiltInFunction(new BuiltInFunctionValue("print", (host, context, interpreter, args) -> {
 			interpreter.print(args[0].toString());
-			return onGoingRuntime.buffer(args[0]);
+			return args[0];
 		}, "ln"));
 		
-		fileContext.addBuiltInFunction(new BuiltInFunctionValue("random", (host, context, interpreter, onGoingRuntime, args) -> {
-			return onGoingRuntime.buffer(new FloatValue((float) Math.random()));
+		fileContext.addBuiltInFunction(new BuiltInFunctionValue("random", (host, context, interpreter, args) -> {
+			return new FloatValue((float) Math.random());
 		}));
 		
-		fileContext.addBuiltInFunction(new BuiltInFunctionValue("time", (host, context, interpreter, onGoingRuntime, args) -> {
-			return onGoingRuntime.buffer(IntegerValue.get((int) System.currentTimeMillis()));
+		fileContext.addBuiltInFunction(new BuiltInFunctionValue("time", (host, context, interpreter, args) -> {
+			return IntegerValue.get((int) System.currentTimeMillis());
 		}));
 	}
 
