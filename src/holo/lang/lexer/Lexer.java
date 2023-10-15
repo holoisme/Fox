@@ -22,15 +22,15 @@ public class Lexer {
 	private static final Map<Character, String> STRING_ESCAPE_CHARS = Map.ofEntries(Map.entry('n', "\n"), Map.entry('t', "\t"), Map.entry('\\', "\\"));
 	
 	public static final String[] KEYWORDS = {
-		"var", "function", "if", "else", "for", "in", "while", "do", "try", "catch", "switch", "case",
-		"extract", "from", "library", "import", "as",
-		"return", "break", "continue", "assert",
+		"var", "function",
+		"if", "else", "for", "in", "while", "do", "try", "catch", "switch", "case",
+		"library", "import", "as",
+		"return", "break", "continue", "assert", "throw",
 		"this",
 		"and", "or", "not",
-		"true", "false", "null",
-		"int", "float", "double", "char", "string", "boolean",
-		"class", "enum", "constructor", "static", "new",
-		"extends", "super"
+		"true", "false", "null", "undefined",
+		"int", "float", "double", "char", "short", "byte", "long", "boolean", "string",
+		"class", "enum", "constructor", "static", "new", "extends", "super", "operator", "typeof"
 	};
 	
 	public static LexerResult extract(File file) throws IOException {
@@ -77,24 +77,23 @@ public class Lexer {
 			else if(c == '}') tokens.add(new Token("}", TokenType.RIGHT_CURLY_BRACKET, Sequence.from(line, row, 1, fileName)));
 			else if(c == ':') tokens.add(new Token(":", TokenType.COLON, Sequence.from(line, row, 1, fileName)));
 			else if(c == ',') tokens.add(new Token(",", TokenType.COMMA, Sequence.from(line, row, 1, fileName)));
-//			else if(c == '?') tokens.add(new Token("?", TokenType.QUESTION_MARK, Sequence.from(line, row, 1, fileName)));
-//			else if(c == '?') i = buildWhenNextCharacterIs(i, c, '?', TokenType.QUESTION_MARK, TokenType.DOUBLE_QUESTION_MARK, chars, line, row, fileName, tokens);
 			else if(c == '?') i = buildQuestionMark(i, chars, line, row, fileName, tokens);
 			
 			else if(c == '.') i = buildPoint(i, chars, line, row, fileName, tokens);
 			else if(c == '!') i = buildExclamationMark(i, chars, line, row, fileName, tokens);
-			else if(c == '&') i = buildBooleanOp(i, c, chars, "and", line, row, fileName, tokens);
-			else if(c == '|') i = buildBooleanOp(i, c, chars, "or", line, row, fileName, tokens);
+			else if(c == '&') i = buildBooleanOp(i, c, chars, "and", line, row, fileName, TokenType.LOGICAL_AND, TokenType.LOGICAL_AND_EQUAL, tokens);
+			else if(c == '|') i = buildBooleanOp(i, c, chars, "or", line, row, fileName, TokenType.LOGICAL_OR, TokenType.LOGICAL_OR_EQUAL, tokens);
 			
-//			else if(c == '=') i = buildWhenNextCharacterIs(i, c, '=', TokenType.EQUALS, TokenType.DOUBLE_EQUALS, chars, line, row, fileName, tokens);
 			else if(c == '=') i = buildEqual(i, chars, line, row, fileName, tokens);
 			
-			else if(c == '<') i = buildWhenNextCharacterIs(i, c, '=', TokenType.LESS_THAN, TokenType.LESS_OR_EQUAL, chars, line, row, fileName, tokens);
-			else if(c == '>') i = buildWhenNextCharacterIs(i, c, '=', TokenType.GREATER_THAN, TokenType.GREATER_OR_EQUAL, chars, line, row, fileName, tokens);
+			else if(c == '<') i = buildLeftChevron(i, chars, line, row, fileName, tokens);
+			else if(c == '>') i = buildRightChevron(i, chars, line, row, fileName, tokens);
 			
-			else if(c == '*') i = buildWhenNextCharacterIs(i, c, '=', TokenType.MULTIPLY, TokenType.MULTIPLY_EQUAL, chars, line, row, fileName, tokens);
-			else if(c == '/') i = buildWhenNextCharacterIs(i, c, '=', TokenType.DIVIDE, TokenType.DIVIDE_EQUAL, chars, line, row, fileName, tokens);
-			else if(c == '^') i = buildWhenNextCharacterIs(i, c, '=', TokenType.EXPONANT, TokenType.EXPONANT_EQUAL, chars, line, row, fileName, tokens);
+//			else if(c == '*') i = buildWhenNextCharacterIs(i, c, '=', TokenType.MULTIPLY, TokenType.MULTIPLY_EQUAL, chars, line, row, fileName, tokens);
+			else if(c == '*') i = buildMult(i, chars, line, row, fileName, tokens);
+//			else if(c == '/') i = buildWhenNextCharacterIs(i, c, '=', TokenType.DIVIDE, TokenType.DIVIDE_EQUAL, chars, line, row, fileName, tokens);
+			else if(c == '/') i = buildDiv(i, chars, line, row, fileName, tokens);
+			else if(c == '^') i = buildWhenNextCharacterIs(i, c, '=', TokenType.LOGICAL_XOR, TokenType.LOGICAL_XOR_EQUAL, chars, line, row, fileName, tokens);
 			else if(c == '%') i = buildWhenNextCharacterIs(i, c, '=', TokenType.MODULO, TokenType.MODULO_EQUAL, chars, line, row, fileName, tokens);
 			
 			else if(c == '+') i = buildBinaryOP(i, c, TokenType.PLUS, TokenType.PLUS_EQUAL, TokenType.PLUS_PLUS, chars, line, row, fileName, tokens);
@@ -106,7 +105,7 @@ public class Lexer {
 			else if(c == '"') i = buildString(i, '"', chars, line, row, fileName, tokens);
 			else if(c == '\'') i = buildString(i, '\'', chars, line, row, fileName, tokens);
 			
-			else if(c == '#') i = buildComment(i, chars);
+//			else if(c == '#') i = buildComment(i, chars);
 			else if(c != '\r') {
 				error = new LexerError(c, Sequence.from(line, row, 1, fileName));
 				break;
@@ -118,9 +117,45 @@ public class Lexer {
 		return new LexerResult(tokens, text, fileName, error);
 	}
 	
+	private static int buildDiv(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
+		if(index < chars.length - 1) {
+			if(chars[index + 1] == '/') {
+				while(index < chars.length) {
+					if(chars[index] == '\n')
+						break;
+					index++;
+				}
+				return index - 1;
+			}
+			
+			if(chars[index + 1] == '*') {
+				while(index < chars.length) {
+					if(index < chars.length - 1) {
+						if(chars[index] == '*' && chars[index + 1] == '/')
+							return index + 1;
+					}
+					index++;
+				}
+				return index;
+			}
+			
+			if(chars[index + 1] == '=') {
+				tokens.add(new Token("/=", TokenType.DIVIDE_EQUAL, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+		}
+		tokens.add(new Token("/", TokenType.DIVIDE, Sequence.from(line, row, 1, fileName)));
+		return index;
+	}
+	
 	private static int buildQuestionMark(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
 		if(index < chars.length - 1) {
 			if(chars[index + 1] == '?') {
+				if(index < chars.length - 2 && chars[index + 2] == '?') {
+					tokens.add(new Token("undefined", TokenType.KEYWORD, Sequence.from(line, row, 3, fileName)));
+					return index + 2;
+				}
+				
 				tokens.add(new Token("??", TokenType.DOUBLE_QUESTION_MARK, Sequence.from(line, row, 2, fileName)));
 				return index + 1;
 			}
@@ -147,6 +182,78 @@ public class Lexer {
 			}
 		}
 		tokens.add(new Token("=", TokenType.EQUALS, Sequence.from(line, row, 1, fileName)));
+		return index;
+	}
+	
+	private static int buildMult(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
+		if(index < chars.length - 1) {
+			if(chars[index + 1] == '=') {
+				tokens.add(new Token("*=", TokenType.MULTIPLY_EQUAL, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+			
+			if(chars[index + 1] == '*') {
+				if(index < chars.length - 2 && chars[index + 2] == '=') {
+					tokens.add(new Token("**=", TokenType.EXPONANT_EQUAL, Sequence.from(line, row, 3, fileName)));
+					return index + 2;
+				}
+				tokens.add(new Token("**", TokenType.EXPONANT, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+		}
+		tokens.add(new Token("*", TokenType.MULTIPLY, Sequence.from(line, row, 1, fileName)));
+		return index;
+	}
+	
+	private static int buildLeftChevron(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
+		if(index < chars.length - 1) {
+			if(chars[index + 1] == '=') {
+				tokens.add(new Token("<=", TokenType.LESS_OR_EQUAL, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+			
+			if(chars[index + 1] == '<') {
+				if(index < chars.length - 2 && chars[index + 2] == '=') {
+					tokens.add(new Token("<<=", TokenType.LOGICAL_SHIFT_LEFT_EQUAL, Sequence.from(line, row, 3, fileName)));
+					return index + 2;
+				}
+				tokens.add(new Token("<<", TokenType.LOGICAL_SHIFT_LEFT, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+		}
+		tokens.add(new Token("<", TokenType.LESS_THAN, Sequence.from(line, row, 1, fileName)));
+		return index;
+	}
+	
+	private static int buildRightChevron(int index, char[] chars, int line, int row, String fileName, List<Token> tokens) {
+		if(index < chars.length - 1) {
+			if(chars[index + 1] == '=') {
+				tokens.add(new Token(">=", TokenType.GREATER_OR_EQUAL, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+			
+			if(chars[index + 1] == '>') {
+				if(index < chars.length - 2) {
+					if(chars[index + 2] == '>') {
+						if(index < chars.length - 3 && chars[index + 3] == '=') {
+							tokens.add(new Token(">>>=", TokenType.LOGICAL_STRICT_SHIFT_RIGHT_EQUAL, Sequence.from(line, row, 4, fileName)));
+							return index + 3;
+						}
+						tokens.add(new Token(">>>", TokenType.LOGICAL_UNSIGNED_SHIFT_RIGHT, Sequence.from(line, row, 3, fileName)));
+						return index + 2;
+					}
+					
+					if(chars[index + 2] == '=') {
+						tokens.add(new Token(">>=", TokenType.LOGICAL_SHIFT_RIGHT_EQUAL, Sequence.from(line, row, 3, fileName)));
+						return index + 2;
+					}
+				}
+				tokens.add(new Token(">>", TokenType.LOGICAL_SHIFT_RIGHT, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+			
+		}
+		tokens.add(new Token(">", TokenType.GREATER_THAN, Sequence.from(line, row, 1, fileName)));
 		return index;
 	}
 	
@@ -332,23 +439,33 @@ public class Lexer {
 		return index;
 	}
 	
-	private static int buildBooleanOp(int index, char current, char[] chars, String content, int line, int row, String fileName, List<Token> tokens) {
-		if(index < chars.length - 1 && chars[index + 1] == current) {
-			tokens.add(new Token(content, TokenType.KEYWORD, Sequence.from(line, row, 2, fileName)));
-			return index + 1;
+	private static int buildBooleanOp(int index, char current, char[] chars, String content, int line, int row, String fileName, TokenType single, TokenType equal, List<Token> tokens) {
+		if(index < chars.length - 1) {
+			if(chars[index + 1] == current) {
+				tokens.add(new Token(content, TokenType.KEYWORD, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+			
+			if(chars[index + 1] == '=') {
+				tokens.add(new Token(current + "=", equal, Sequence.from(line, row, 2, fileName)));
+				return index + 1;
+			}
+			
+			tokens.add(new Token(current+"", single, Sequence.from(line, row, 1, fileName)));
+			return index;
 		}
 		tokens.add(new Token(content, TokenType.KEYWORD, Sequence.from(line, row, 1, fileName)));
 		return index;
 	}
 	
-	private static int buildComment(int index, char[] chars) {
-		while(true) {
-			index++;
-			if(index >= chars.length) break;
-			if(chars[index] == '\n') return index - 1;
-		}
-		return index;
-	}
+//	private static int buildComment(int index, char[] chars) {
+//		while(true) {
+//			index++;
+//			if(index >= chars.length) break;
+//			if(chars[index] == '\n') return index - 1;
+//		}
+//		return index;
+//	}
 
 	public static boolean isKeyword(String str) {
 		for(String keyword:KEYWORDS)
