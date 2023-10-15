@@ -1,6 +1,5 @@
 package holo.lang.lexer;
 
-//public record Sequence(int line, int row, int size, String file) {
 public record Sequence(int lineStart, int lineEnd, int rowStart, int rowEnd, String file) {
 	
 	public static Sequence from(int line, int row, int size, String file) {
@@ -8,16 +7,23 @@ public record Sequence(int lineStart, int lineEnd, int rowStart, int rowEnd, Str
 	}
 	
 	public Sequence join(Sequence other) {
-		int lStart = Math.min(lineStart, other.lineStart);
-		int lEnd = Math.max(lineEnd, other.lineEnd);
+		if(other == null || other == this)
+			return this;
 		
-		return new Sequence(lStart, lEnd,
-				lineStart == lStart ? rowStart : other.rowStart,
-				lineEnd == lEnd ? rowEnd : other.rowEnd, file);
+		final int lStart = Math.min(lineStart, other.lineStart);
+		final int lEnd = Math.max(lineEnd, other.lineEnd);
+		
+		return lStart == lEnd ?
+				new Sequence(lStart, lEnd, Math.min(rowStart, other.rowStart), Math.max(rowEnd, other.rowEnd), file) :
+				new Sequence(lStart, lEnd, lStart == lineStart ? rowStart : other.rowStart, lEnd == lineEnd ? rowEnd : other.rowEnd, file);
 	}
 	
 	public String toString() {
 		return lineStart + ":" + rowStart + " " + file;
+	}
+	
+	public String toStringLength() {
+		return toString() + " ("+(rowEnd - rowStart)+" chars)";
 	}
 	
 	public String arrowify(String text) {
