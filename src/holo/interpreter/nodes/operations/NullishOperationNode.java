@@ -13,7 +13,7 @@ public record NullishOperationNode(Node left, Node right, Sequence sequence) imp
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Value leftValue = left.interpret(parentContext, interpreter);
+		final Value leftValue = left.interpret(parentContext, interpreter);
 		
 		return leftValue.isTrue() ? leftValue : right.interpret(parentContext, interpreter);
 	}
