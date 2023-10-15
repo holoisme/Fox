@@ -1,6 +1,5 @@
 package holo.interpreter.values.primitives;
 
-import holo.interpreter.types.UnaryOperationType;
 import holo.interpreter.values.Value;
 
 public class BooleanValue implements Value {
@@ -18,11 +17,7 @@ public class BooleanValue implements Value {
 	
 	public String toString() { return value+""; }
 	
-	public static BooleanValue get(boolean value) { return value?TRUE:FALSE; }
-	
-	public Value unaryOperation(UnaryOperationType operation) {
-		return operation == UnaryOperationType.NOT ? get(!value) : null;
-	}
+	public static BooleanValue get(boolean value) { return value ? TRUE : FALSE; }
 	
 	@Override
 	public boolean isTrue() {
@@ -35,30 +30,17 @@ public class BooleanValue implements Value {
 			return value == b.value;
 		return false;
 	}
-
-	@Override
-	public Value pointGet(String key) {
-		return null;
-	}
-
-	@Override
-	public Value pointSet(String key, Value value) {
-		return null;
-	}
-
-	@Override
-	public Value arrayGet(Value key) {
-		return null;
-	}
-
-	@Override
-	public Value arraySet(Value key, Value value) {
-		return null;
-	}
 	
+	@Override
 	public String typeName() { return "boolean"; }
 	
+	@Override
+	public Value typeOf() { return new StringValue("integer"); }
+	
+	@Override
 	public Object toJavaObject() { return value; }
+	
+	@Override
 	public Class<?> toJavaClass(Object selfObject) { return boolean.class; }
 	
 }
