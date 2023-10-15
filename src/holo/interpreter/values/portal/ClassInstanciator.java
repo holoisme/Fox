@@ -5,23 +5,23 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Map;
 
 import holo.errors.RuntimeError;
 import holo.errors.portal.NoSuchMethodError;
 import holo.interpreter.Interpreter;
 import holo.interpreter.nodes.helpers.args.NamedValue;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallHandler;
 import holo.interpreter.values.interfaces.IInstanciable;
+import holo.interpreter.values.primitives.StringValue;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TError;
 
 public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	
 	private Class<?> cl;
 	
-	private Map<String, Field> staticFields;
+//	private Map<String, Field> staticFields;
 	
 	public ClassInstanciator(Class<?> cl) {
 		this.cl = cl;
@@ -51,6 +51,7 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 			Object instance = constructor.newInstance(convertedArgs);
 			return Value.convertJavaToFoxValue(instance);
 		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
 			throw new TError(new RuntimeError(e.getMessage(), null));
 		}
 	}
@@ -59,6 +60,9 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 	public String typeName() {
 		return cl.getSimpleName() + " class";
 	}
+	
+	@Override
+	public Value typeOf() { return new StringValue("class"); }
 	
 	@Override
 	public String toString() {
@@ -75,7 +79,7 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 		return equals(other);
 	}
 
-	public Value pointGet(String key) {
+	public Value pointGet(String key, Sequence sequence) {
 		try {
 			Field field = cl.getDeclaredField(key);
 			if(!Modifier.isStatic(field.getModifiers()) || field.isAnnotationPresent(FoxIgnore.class))
@@ -85,7 +89,7 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 		return null;
 	}
 
-	public Value pointSet(String key, Value v) {
+	public Value pointSet(String key, Value v, Sequence sequence) {
 		try {
 			Field field = cl.getDeclaredField(key);
 			if(field == null || !Modifier.isStatic(field.getModifiers()) || field.isAnnotationPresent(FoxIgnore.class))
@@ -96,17 +100,17 @@ public class ClassInstanciator implements Value, IInstanciable, ICallHandler {
 		
 		return null;
 	}
-
-	public Value arrayGet(Value key) {
-		return null;
+	
+	public Value arrayGet(Value key, Sequence sequence) {
+		return pointGet(key.toString(), sequence);
 	}
-
-	public Value arraySet(Value key, Value value) {
-		return null;
+	
+	public Value arraySet(Value key, Value v, Sequence sequence) {
+		return pointSet(key.toString(), v, sequence);
 	}
 
 	@Override
-	public Value callMethod(String name, Value... args) {
+	public Value callMethod(String name, Value[] args, NamedValue[] optionalArguments, Interpreter interpreter, Sequence sequence) {
 		Object[] convertedArgs = new Object[args.length];
 		Class<?>[] argsClasses = new Class<?>[args.length];
 		

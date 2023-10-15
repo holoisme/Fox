@@ -1,7 +1,7 @@
 package holo.interpreter.values.prototypes;
 
-import holo.interpreter.values.primitives.IntegerValue;
 import holo.interpreter.values.primitives.ListValue;
+import holo.interpreter.values.primitives.numbers.IntegerValue;
 
 public class ListPrototype  {
 
