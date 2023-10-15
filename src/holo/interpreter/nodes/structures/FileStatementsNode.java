@@ -19,7 +19,7 @@ public record FileStatementsNode(Node[] statements, Sequence sequence) implement
 		for(Node statementNode:statements())
 			statementNode.interpret(parentContext, interpreter);
 		
-		return Value.NULL;
+		return Value.UNDEFINED;
 	}
 	
 }
