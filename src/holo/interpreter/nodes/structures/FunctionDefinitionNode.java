@@ -14,7 +14,7 @@ public record FunctionDefinitionNode(String name, FunctionExpressionNode functio
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Value value = functionExpression.interpret(parentContext, interpreter);
+		final Value value = functionExpression.interpret(parentContext, interpreter);
 		
 		parentContext.setToThis(name, value);
 		
