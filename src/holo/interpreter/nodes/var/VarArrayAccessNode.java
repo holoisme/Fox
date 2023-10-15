@@ -4,9 +4,9 @@ import holo.errors.CannotAccessError;
 import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TError;
 
 public record VarArrayAccessNode(Node access, Node index, Sequence sequence) implements Node {
 	
@@ -15,10 +15,10 @@ public record VarArrayAccessNode(Node access, Node index, Sequence sequence) imp
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Value hostValue = access.interpret(parentContext, interpreter);
-		Value indexValue = index.interpret(parentContext, interpreter);
+		final Value hostValue = access.interpret(parentContext, interpreter);
+		final Value indexValue = index.interpret(parentContext, interpreter);
 		
-		Value arrayGetValue = hostValue.arrayGet(indexValue);
+		final Value arrayGetValue = hostValue.arrayGet(indexValue, sequence);
 		if(arrayGetValue == null)
 			throw new TError(new CannotAccessError(hostValue.typeName(), access.sequence()));
 		
