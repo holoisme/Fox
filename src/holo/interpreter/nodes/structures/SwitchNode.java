@@ -15,13 +15,13 @@ public record SwitchNode(Node valueNode, SwitchCase[] cases, Node catchNode, Seq
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Value value = valueNode.interpret(parentContext, interpreter);
+		final Value value = valueNode.interpret(parentContext, interpreter);
 		
 		for(SwitchCase c : cases)
 			if(c.doesMatch(value, parentContext, interpreter))
 				return c.expression().interpret(parentContext, interpreter);
 		
-		return catchNode != null ? catchNode.interpret(parentContext, interpreter) : Value.NULL;
+		return catchNode == null ? Value.UNDEFINED : catchNode.interpret(parentContext, interpreter);
 	}
 	
 }
