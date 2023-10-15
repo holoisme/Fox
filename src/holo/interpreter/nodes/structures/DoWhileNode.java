@@ -7,11 +7,11 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.IterationContext;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.transcendental.TBreak;
+import holo.interpreter.transcendental.TContinue;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.ListValue;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TBreak;
-import holo.transcendental.TContinue;
 
 public record DoWhileNode(Node condition, Node body, Sequence sequence) implements Node {
 	
@@ -35,9 +35,9 @@ public record DoWhileNode(Node condition, Node body, Sequence sequence) implemen
 				}
 			} while(condition.interpret(doWhileContext, interpreter).isTrue());
 			
-			return Value.NULL;
+			return Value.UNDEFINED;
 		} else {
-			List<Value> computedValues = new ArrayList<>();
+			final List<Value> computedValues = new ArrayList<>();
 			
 			do {
 				computedValues.add(body.interpret(parentContext, interpreter));

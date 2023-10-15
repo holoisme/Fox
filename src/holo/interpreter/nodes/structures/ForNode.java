@@ -7,11 +7,11 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.IterationContext;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.transcendental.TBreak;
+import holo.interpreter.transcendental.TContinue;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.ListValue;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TBreak;
-import holo.transcendental.TContinue;
 
 public record ForNode(Node initialization, Node condition, Node step, Node body, Sequence sequence) implements Node {
 	
@@ -20,7 +20,7 @@ public record ForNode(Node initialization, Node condition, Node step, Node body,
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		IterationContext forContext = new IterationContext(parentContext);
+		final IterationContext forContext = new IterationContext(parentContext);
 		
 		if(initialization != null)
 			initialization.interpret(forContext, interpreter);
@@ -40,9 +40,9 @@ public record ForNode(Node initialization, Node condition, Node step, Node body,
 				step.interpret(forContext, interpreter);
 			}
 			
-			return Value.NULL;
+			return Value.UNDEFINED;
 		} else {
-			List<Value> computedValues = new ArrayList<>();
+			final List<Value> computedValues = new ArrayList<>();
 			
 			while(condition.interpret(forContext, interpreter).isTrue()) {
 				computedValues.add(body.interpret(forContext, interpreter));
