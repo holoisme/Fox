@@ -29,7 +29,7 @@ public class Prototype<T> {
 	
 	@SuppressWarnings("unchecked")
 	protected void addFunction(String functionName, PrototypeCall<T> lambda, String... arguments) {
-		table.put(functionName, new BuiltInFunctionValue(functionName, (host, context, interpreter, args) -> {
+		table.put(functionName, new BuiltInFunctionValue(functionName, (host, context, interpreter, seq, args) -> {
 			return lambda.call((T) host, args);
 		}, arguments));
 //		table.put(functionName, new BuiltInFunctionValue(functionName, (context, interpreter, args) -> {
