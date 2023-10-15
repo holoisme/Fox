@@ -3,10 +3,13 @@ package holo.interpreter.values.primitives;
 import java.util.ArrayList;
 import java.util.List;
 
+import holo.errors.IndexOutOfBoundsError;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.IIterable;
 import holo.interpreter.values.interfaces.INumber;
 import holo.interpreter.values.prototypes.ListPrototype;
+import holo.lang.lexer.Sequence;
 
 public class ListValue implements Value, IIterable {
 	
@@ -37,31 +40,33 @@ public class ListValue implements Value, IIterable {
 	}
 
 	@Override
-	public Value pointGet(String key) {
+	public Value pointGet(String key, Sequence sequence) {
 		return ListPrototype.PROTOTYPE.get(key);
 	}
 
 	@Override
-	public Value pointSet(String key, Value value) {
-		// TODO Auto-generated method stub
-		return null;
+	public Value arrayGet(Value key, Sequence sequence) {
+		if(key instanceof INumber integer) {
+			final int index = integer.getInteger();
+			if(index < 0 || index >= elements.size())
+				throw new TError(new IndexOutOfBoundsError(index, elements.size(), sequence));
+			return elements.get(index);
+		}
+		return Value.super.arrayGet(key, sequence);
 	}
 
 	@Override
-	public Value arrayGet(Value key) {
-		if(key instanceof IntegerValue integer)
-			return elements.get(integer.getValue());
-		return null;
-	}
-
-	@Override
-	public Value arraySet(Value key, Value value) {
+	public Value arraySet(Value key, Value value, Sequence sequence) {
 		if(key instanceof INumber num)
 			elements.set(num.getInteger(), value);
 		return NULL; // TODO
 	}
 	
+	@Override
 	public String typeName() { return "list"; }
+	
+	@Override
+	public Value typeOf() { return new StringValue("list"); }
 
 	@Override
 	public Value elementAt(int index) {
