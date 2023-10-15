@@ -4,6 +4,7 @@ import holo.interpreter.nodes.helpers.args.ObligatoryDefinitionArgument;
 import holo.interpreter.nodes.helpers.args.OptionalDefinitionArgument;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallable;
+import holo.interpreter.values.primitives.StringValue;
 
 public abstract class BaseFunctionValue implements Value, ICallable {
 	
@@ -15,8 +16,6 @@ public abstract class BaseFunctionValue implements Value, ICallable {
 		this.optionalArguments = optionalArguments;
 	}
 	
-//	public abstract RuntimeResult call(Value host, Context parentContext, Interpreter interpreter, RuntimeResult onGoingRuntime, Value... args);
-
 	@Override
 	public int numberOfArguments() {
 		return regularArguments.length;
@@ -26,6 +25,9 @@ public abstract class BaseFunctionValue implements Value, ICallable {
 	public String typeName() {
 		return "function";
 	}
+	
+	@Override
+	public Value typeOf() { return new StringValue("function"); }
 
 	@Override
 	public boolean isTrue() {
@@ -35,26 +37,6 @@ public abstract class BaseFunctionValue implements Value, ICallable {
 	@Override
 	public boolean equalTo(Value other) {
 		return this == other;
-	}
-
-	@Override
-	public Value pointGet(String key) {
-		return null;
-	}
-
-	@Override
-	public Value pointSet(String key, Value value) {
-		return null;
-	}
-
-	@Override
-	public Value arrayGet(Value key) {
-		return null;
-	}
-
-	@Override
-	public Value arraySet(Value key, Value value) {
-		return null;
 	}
 
 }
