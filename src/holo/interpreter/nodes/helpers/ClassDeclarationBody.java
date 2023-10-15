@@ -1,10 +1,11 @@
 package holo.interpreter.nodes.helpers;
 
 import holo.interpreter.nodes.Node;
-import holo.interpreter.nodes.structures.MultiStatementsNode;
-import holo.interpreter.nodes.values.FunctionExpressionNode;
+import holo.interpreter.nodes.structures.FunctionDefinitionNode;
+import holo.interpreter.nodes.structures.OperatorDefinitionNode;
+import holo.interpreter.nodes.values.ConstructorExpressionNode;
 
-public record ClassDeclarationBody(FunctionExpressionNode[] constructors, Node[] staticDeclarations, MultiStatementsNode instanciateBody) {
+public record ClassDeclarationBody(ConstructorExpressionNode[] constructors, Node[] staticDeclarations, FunctionDefinitionNode[] functions, OperatorDefinitionNode[] operators) {
 
 	public String toString() {
 		String str = "";
@@ -15,7 +16,10 @@ public record ClassDeclarationBody(FunctionExpressionNode[] constructors, Node[]
 		for(Node n:constructors)
 			str += "constructor" + n + "\n";
 		
-		for(Node n:instanciateBody.statements())
+		for(Node n:functions)
+			str += n + "\n";
+		
+		for(Object n:operators)
 			str += n + "\n";
 		
 		return str;
