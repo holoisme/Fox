@@ -9,13 +9,15 @@ public class SimpleContext implements Context {
 	
 	private final String name;
 	private final Context parent;
+	private final boolean enclosed;
 	
 	protected Map<String, Value> table;
 	
-	public SimpleContext(String name, Context TRUE_PARENT) {
+	public SimpleContext(String name, Context TRUE_PARENT, boolean enclosed) {
 		this.name = name;
 		this.parent = TRUE_PARENT;
 		this.table = new HashMap<>();
+		this.enclosed = enclosed;
 	}
 	
 	@Override
@@ -25,7 +27,7 @@ public class SimpleContext implements Context {
 
 	@Override
 	public Value getFromThis(String key) {
-		return table.getOrDefault(key, null);
+		return table.get(key);
 	}
 	
 	@Override
@@ -33,12 +35,10 @@ public class SimpleContext implements Context {
 	
 	@Override
 	public String getName() { return name; }
-
+	
 	@Override
-	public Context getFirstParentThatHasKey(String key) {
-		if(table.containsKey(key)) return this;
-		Context parent = getParent();
-		return parent == null ? null : parent.getFirstParentThatHasKey(key);
+	public boolean isEnclosed() {
+		return enclosed;
 	}
 
 	@Override
@@ -49,5 +49,5 @@ public class SimpleContext implements Context {
 	public String toString() {
 		return name + " " + table;
 	}
-	
+
 }
