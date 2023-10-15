@@ -11,7 +11,7 @@ public class FileShellContext extends SimpleContext implements Library {
 	private FileInnerContext innerContext;
 	
 	public FileShellContext(String fileName) {
-		super(fileName, null);
+		super(fileName, null, true);
 		this.importedLibrariesNames = new ArrayList<>();
 		this.innerContext = new FileInnerContext("Inner "+fileName, this);
 	}
