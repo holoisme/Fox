@@ -19,18 +19,14 @@ public record IfNode(ConditionnedSequence[] conditions, Node elseBodyNode, Seque
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		
 		for(ConditionnedSequence conditionnedSequence:conditions) {
-			Value conditionValue = conditionnedSequence.condition().interpret(parentContext, interpreter);
+			final Value conditionValue = conditionnedSequence.condition().interpret(parentContext, interpreter);
 			
 			if(conditionValue.isTrue())
 				return conditionnedSequence.body().interpret(parentContext, interpreter);
 		}
 		
-		if(elseBodyNode == null)
-			return Value.NULL;
-		
-		return elseBodyNode.interpret(parentContext, interpreter);
+		return elseBodyNode == null ? Value.UNDEFINED : elseBodyNode.interpret(parentContext, interpreter);
 	}
 	
 }
