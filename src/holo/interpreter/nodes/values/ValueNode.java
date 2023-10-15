@@ -9,7 +9,7 @@ import holo.lang.lexer.Sequence;
 public record ValueNode(Value value, Sequence sequence) implements Node {
 	
 	public String toString() {
-		return value + "";
+		return value.toString();
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
