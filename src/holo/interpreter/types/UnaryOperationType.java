@@ -2,7 +2,7 @@ package holo.interpreter.types;
 
 public enum UnaryOperationType {
 	
-	NOT("not"), NEGATE("-");
+	NEGATE("-"), LOGICAL_NOT("~");
 	
 	private String symbol;
 	
