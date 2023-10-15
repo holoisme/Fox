@@ -15,21 +15,10 @@ public record BinaryBooleanOperationNode(BinaryBooleanOperationType operation, N
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Value leftValue = left.interpret(parentContext, interpreter);
-		
-		if(operation == BinaryBooleanOperationType.AND) {
-			if(!leftValue.isTrue())
-				return BooleanValue.FALSE;
-			
-			return BooleanValue.get(right.interpret(parentContext, interpreter).isTrue());
-		} else if(operation == BinaryBooleanOperationType.OR) {
-			if(leftValue.isTrue())
-				return BooleanValue.TRUE;
-			
-			return BooleanValue.get(right.interpret(parentContext, interpreter).isTrue());
-		}
-		
-		return Value.NULL;
+		final Value leftValue = left.interpret(parentContext, interpreter);
+		return operation == BinaryBooleanOperationType.AND ?
+				BooleanValue.get(leftValue.isTrue() && right.interpret(parentContext, interpreter).isTrue()) :
+				BooleanValue.get(leftValue.isTrue() || right.interpret(parentContext, interpreter).isTrue());	
 	}
 	
 }
