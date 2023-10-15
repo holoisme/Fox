@@ -2,7 +2,9 @@ package holo.interpreter.types;
 
 public enum CastingType {
 	
-	INTEGER("int"), FLOAT("float"), DOUBLE("double"), CHARACTER("char"), STRING("string"), BOOLEAN("boolean");
+	BYTE("byte"), CHARACTER("char"), SHORT("short"), INTEGER("int"), LONG("long"),
+	FLOAT("float"), DOUBLE("double"),
+	STRING("string"), BOOLEAN("boolean");
 	
 	private String symbol;
 	
@@ -10,15 +12,13 @@ public enum CastingType {
 		this.symbol = symbol;
 	}
 	
-	public String toString() { return symbol; }
+	public String toString() { return name(); }
+	public String getSymbol() { return symbol; }
 	
 	public static CastingType get(String type) {
-		if(type.equals("int")) return INTEGER;
-		else if(type.equals("float")) return FLOAT;
-		else if(type.equals("double")) return DOUBLE;
-		else if(type.equals("string")) return STRING;
-		else if(type.equals("boolean")) return BOOLEAN;
-		else if(type.equals("char")) return CHARACTER;
+		for(CastingType t:values())
+			if(type.equals(t.getSymbol()))
+				return t;
 		
 		return null;
 	}
