@@ -8,6 +8,7 @@ import holo.interpreter.nodes.helpers.args.NamedValue;
 import holo.interpreter.nodes.helpers.args.ObligatoryDefinitionArgument;
 import holo.interpreter.nodes.helpers.args.OptionalDefinitionArgument;
 import holo.interpreter.values.Value;
+import holo.lang.lexer.Sequence;
 
 public class BuiltInFunctionValue extends BaseFunctionValue {
 
@@ -32,13 +33,13 @@ public class BuiltInFunctionValue extends BaseFunctionValue {
 		this.executor = executor;
 	}
 
-	public Value call(Value host, Context parentContext, Interpreter interpreter, Value[] args, NamedValue[] optionalArguments) {
-		Context callContext = new SimpleContext("built-in-function " + name, null);
+	public Value call(Value host, Context parentContext, Interpreter interpreter, Sequence sequence, Value[] args, NamedValue[] optionalArguments) {
+		Context callContext = new SimpleContext("built-in-function " + name, null, true);
 		for(int i = 0; i < regularArguments.length; i++)
 			callContext.setToThis(regularArguments[i].name(), args[i]);
 		
-		Value value = executor.call(host, callContext, interpreter, args);
-		return value == null ? Value.NULL : value;
+		Value value = executor.call(host, callContext, interpreter, sequence, args);
+		return value == null ? Value.UNDEFINED : value;
 	}
 	
 	public String getName() { return name; }
