@@ -4,11 +4,10 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.SimpleContext;
 import holo.interpreter.nodes.Node;
-import holo.interpreter.values.ErrorValue;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.primitives.BooleanValue;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TError;
 
 public record TryCatchNode(Node tryBody, Node catchBody, String errorVarName, Sequence sequence) implements Node {
 
@@ -19,17 +18,16 @@ public record TryCatchNode(Node tryBody, Node catchBody, String errorVarName, Se
 	@Override
 	public Value interpret(Context parentContext, Interpreter interpreter) {
 		try {
-			Value value = tryBody.interpret(parentContext, interpreter);
+			final Value value = tryBody.interpret(parentContext, interpreter);
 			
-			return value == Value.NULL ? BooleanValue.TRUE : value;
+			return value == Value.UNDEFINED ? BooleanValue.TRUE : value;
 		} catch(TError t) {
-			Context catchContext = new SimpleContext("catch", parentContext);
-			catchContext.setToThis(errorVarName, new ErrorValue(t.error()));
-			Value value = catchBody.interpret(catchContext, interpreter);
+			final Context catchContext = new SimpleContext("catch", parentContext, false);
+			catchContext.setToThis(errorVarName, t.error());
+			final Value value = catchBody.interpret(catchContext, interpreter);
 			
-			return value == Value.NULL ? BooleanValue.FALSE : value;
+			return value == Value.UNDEFINED ? BooleanValue.FALSE : value;
 		}
 	}
-
 
 }
