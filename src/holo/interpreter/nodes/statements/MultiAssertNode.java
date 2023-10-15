@@ -5,9 +5,9 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.ReflectionUtils;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TError;
 
 public record MultiAssertNode(Node[] conditions, Sequence sequence) implements Node {
 
@@ -21,7 +21,7 @@ public record MultiAssertNode(Node[] conditions, Sequence sequence) implements N
 			if(!condition.interpret(parentContext, interpreter).isTrue())
 				throw new TError(new AssertionError("Condition " + condition.toString() + " should be true", condition.sequence()));
 		
-		return Value.NULL;
+		return Value.UNDEFINED;
 	}
 
 }

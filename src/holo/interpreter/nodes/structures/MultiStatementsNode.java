@@ -17,19 +17,19 @@ public record MultiStatementsNode(Node[] statements, Sequence sequence) implemen
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Context context = new SimpleContext(parentContext.getName() + " child", parentContext);
+		final Context context = new SimpleContext(parentContext.getName() + " child", parentContext, false);
 		
 		for(Node statementNode:statements())
 			statementNode.interpret(context, interpreter);
 		
-		return Value.NULL;
+		return Value.UNDEFINED;
 	}
 	
 	public Value interpretTransparently(Context parentContext, Interpreter interpreter) {
 		for(Node statementNode:statements())
 			statementNode.interpret(parentContext, interpreter);
 		
-		return Value.NULL;
+		return Value.UNDEFINED;
 	}
 	
 }

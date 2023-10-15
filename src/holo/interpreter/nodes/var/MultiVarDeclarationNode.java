@@ -4,15 +4,16 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.nodes.Node;
 import holo.interpreter.nodes.ReflectionUtils;
+import holo.interpreter.nodes.helpers.VarDeclaration;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
 
-public record MultiVarDeclarationNode(VarDeclarationNode[] declarations, Sequence sequence) implements Node {
+public record MultiVarDeclarationNode(VarDeclaration[] declarations, Sequence sequence) implements Node {
 
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		for(VarDeclarationNode declaration:declarations)
+		for(VarDeclaration declaration:declarations)
 			declaration.interpret(parentContext, interpreter);
-		return Value.NULL;
+		return Value.UNDEFINED;
 	}
 
 	@Override
