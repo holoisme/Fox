@@ -18,7 +18,7 @@ public record ListNode(Node[] nodes, Sequence sequence) implements Node {
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		List<Value> elements = new ArrayList<>();
+		final List<Value> elements = new ArrayList<>();
 		
 		for(Node elementNode: nodes)
 			elements.add(elementNode.interpret(parentContext, interpreter));
