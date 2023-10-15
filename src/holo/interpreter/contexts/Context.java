@@ -2,6 +2,7 @@ package holo.interpreter.contexts;
 
 import holo.interpreter.values.Value;
 import holo.interpreter.values.functions.BuiltInFunctionValue;
+import holo.interpreter.values.interfaces.IClass;
 
 public interface Context {
 	
@@ -11,21 +12,27 @@ public interface Context {
 	
 	public Context getParent();
 	public String getName();
+	public boolean isEnclosed();
 	
 	public default Value get(String key) {
-		Value value = getFromThis(key);
+		final Value value = getFromThis(key);
 		
 		if(value != null)
 			return value;
 		
-		Context parent = getParent();
+		final Context parent = getParent();
 		if(parent == null)
 			return null;
 		
 		return parent.get(key);
 	}
 	
-	public Context getFirstParentThatHasKey(String key);
+	public default Context getFirstParentThatHasKey(String key) {
+		if(contains(key)) return this;
+		
+		final Context parent = getParent();
+		return parent == null ? null : parent.getFirstParentThatHasKey(key);
+	}
 	
 	public default Context getFirstThisableParent() {
 		if(thisAble()) return this;
@@ -34,8 +41,17 @@ public interface Context {
 		return null;
 	}
 	
+	public default Context getFirstSuperableParent() {
+		if(superAble()) return this;
+		Context parent = getParent();
+		if(parent != null) return parent.getFirstSuperableParent();
+		return null;
+	}
+	
 	public default boolean thisAble() { return false; }
 	public default Value thisValue() { return null; }
+	public default boolean superAble() { return false; }
+	public default IClass superValue() { return null; }
 	
 	public default int getDepth() {
 		Context parent = getParent();
@@ -46,6 +62,19 @@ public interface Context {
 	
 	public default void addBuiltInFunction(BuiltInFunctionValue function) {
 		setToThis(function.getName(), function);
+	}
+	
+	public default boolean authorizeNewVar(String name) {
+		if(contains(name)) return false;
+		
+		if(isEnclosed())
+			return true;
+		
+		final Context parent = getParent();
+		if(parent == null)
+			return true;
+		
+		return parent.authorizeNewVar(name);
 	}
 	
 	public default String tree() {
