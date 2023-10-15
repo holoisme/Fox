@@ -3,8 +3,11 @@ package holo.interpreter.values.primitives;
 import java.util.HashMap;
 import java.util.Map;
 
+import holo.errors.NoSuchVariableError;
 import holo.interpreter.contexts.Context;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
+import holo.lang.lexer.Sequence;
 
 public class ObjectValue implements Value, Context {
 	
@@ -36,23 +39,25 @@ public class ObjectValue implements Value, Context {
 	}
 
 	@Override
-	public Value pointGet(String key) {
-		return table.get(key);
+	public Value pointGet(String key, Sequence sequence) {
+		if(table.containsKey(key))
+			return table.get(key);
+		throw new TError(new NoSuchVariableError(key, sequence));
 	}
 
 	@Override
-	public Value pointSet(String key, Value value) {
+	public Value pointSet(String key, Value value, Sequence sequence) {
 		table.put(key.toString(), value);
 		return value;
 	}
 
 	@Override
-	public Value arrayGet(Value key) {
+	public Value arrayGet(Value key, Sequence sequence) {
 		return table.get(key.toString());
 	}
 
 	@Override
-	public Value arraySet(Value key, Value value) {
+	public Value arraySet(Value key, Value value, Sequence sequence) {
 		table.put(key.toString(), value);
 		return value;
 	}
@@ -64,7 +69,7 @@ public class ObjectValue implements Value, Context {
 
 	@Override
 	public Value getFromThis(String key) {
-		return table.getOrDefault(key, null);
+		return table.get(key);
 	}
 
 	@Override
@@ -82,22 +87,25 @@ public class ObjectValue implements Value, Context {
 	public Value thisValue() {
 		return this;
 	}
-	
-	@Override
-	public Context getFirstParentThatHasKey(String key) {
-		if(table.containsKey(key)) return this;
-		return definingContext.getFirstParentThatHasKey(key);
-	}
 
 	@Override
 	public boolean contains(String key) {
 		return table.containsKey(key);
 	}
 	
+	@Override
 	public String typeName() { return "object"; }
+	
+	@Override
+	public Value typeOf() { return new StringValue("object"); }
 	
 	public String toString() {
 		return table.toString();
+	}
+
+	@Override
+	public boolean isEnclosed() {
+		return true;
 	}
 	
 }

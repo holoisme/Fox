@@ -1,15 +1,21 @@
 package holo.interpreter.values.primitives;
 
 import holo.interpreter.values.Value;
+import holo.lang.lexer.Sequence;
 
 public class NullValue implements Value {
 	
-	public NullValue() {}
+	public static final NullValue NULL = new NullValue();
+	
+	private NullValue() {}
 	
 	@Override
 	public String typeName() {
 		return "null";
 	}
+	
+	@Override
+	public Value typeOf() { return NULL; }
 
 	@Override
 	public boolean isTrue() {
@@ -18,26 +24,26 @@ public class NullValue implements Value {
 	
 	@Override
 	public boolean equalTo(Value other) {
-		return other == Value.NULL;
+		return other == NULL;
 	}
 
 	@Override
-	public Value pointGet(String key) {
+	public Value pointGet(String key, Sequence sequence) {
 		return null;
 	}
 
 	@Override
-	public Value pointSet(String key, Value value) {
+	public Value pointSet(String key, Value value, Sequence sequence) {
 		return null;
 	}
 
 	@Override
-	public Value arrayGet(Value key) {
+	public Value arrayGet(Value key, Sequence sequence) {
 		return null;
 	}
 
 	@Override
-	public Value arraySet(Value key, Value value) {
+	public Value arraySet(Value key, Value value, Sequence sequence) {
 		return null;
 	}
 	
@@ -45,6 +51,8 @@ public class NullValue implements Value {
 	public String toString() {
 		return "null";
 	}
+	
+	public boolean nullOrUndefined() { return true; }
 	
 	public Object toJavaObject() { return null; }
 	public Class<?> toJavaClass(Object selfObject) { return null; }
