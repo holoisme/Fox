@@ -5,9 +5,13 @@ import java.lang.reflect.Method;
 
 import holo.errors.RuntimeError;
 import holo.errors.portal.NoSuchMethodError;
+import holo.interpreter.Interpreter;
+import holo.interpreter.nodes.helpers.args.NamedValue;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.interpreter.values.interfaces.ICallHandler;
-import holo.transcendental.TError;
+import holo.interpreter.values.primitives.StringValue;
+import holo.lang.lexer.Sequence;
 
 public class FoxPortalWrapper implements Value, ICallHandler {
 	
@@ -23,6 +27,13 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 			return ((FoxPortal) value).typeName();
 		return value.getClass().getSimpleName();
 	}
+	
+	@Override
+	public Value typeOf() {
+		if(value instanceof FoxPortal)
+			return new StringValue( ((FoxPortal) value).typeName() );
+		return new StringValue( value.getClass().getSimpleName() );
+	}
 
 	@Override
 	public boolean isTrue() {
@@ -37,7 +48,7 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 	}
 
 	@Override
-	public Value pointGet(String key) {
+	public Value pointGet(String key, Sequence sequence) {
 		try {
 			Field field = value.getClass().getField(key);
 			if(field == null || field.isAnnotationPresent(FoxIgnore.class))
@@ -49,7 +60,8 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 		}
 	}
 	
-	public Value callMethod(String name, Value... args) {
+	@Override
+	public Value callMethod(String name, Value[] args, NamedValue[] optionalArguments, Interpreter interpreter, Sequence sequence) {
 		Object[] convertedArgs = new Object[args.length];
 		Class<?>[] argsClasses = new Class<?>[args.length];
 		
@@ -70,7 +82,7 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 	}
 
 	@Override
-	public Value pointSet(String key, Value v) {
+	public Value pointSet(String key, Value v, Sequence sequence) {
 		try {
 			Field field = value.getClass().getField(key);
 			if(field == null || field.isAnnotationPresent(FoxIgnore.class))
@@ -78,16 +90,6 @@ public class FoxPortalWrapper implements Value, ICallHandler {
 			field.set(value, v.toJavaObject());
 			return v;
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) { e.printStackTrace(); }
-		return null;
-	}
-
-	@Override
-	public Value arrayGet(Value key) {
-		return null;
-	}
-
-	@Override
-	public Value arraySet(Value key, Value value) {
 		return null;
 	}
 	
