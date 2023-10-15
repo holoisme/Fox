@@ -6,9 +6,9 @@ import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.FileInnerContext;
 import holo.interpreter.nodes.Node;
+import holo.interpreter.transcendental.TError;
 import holo.interpreter.values.Value;
 import holo.lang.lexer.Sequence;
-import holo.transcendental.TError;
 
 public record SingleImportNode(String path, Sequence sequence) implements Node {
 	
@@ -17,9 +17,8 @@ public record SingleImportNode(String path, Sequence sequence) implements Node {
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		
 		if(parentContext instanceof FileInnerContext fileContext) {
-			FileInnerContext imported = interpreter.getImportedFile(path);
+			final FileInnerContext imported = interpreter.getImportedFile(path);
 			if(imported == null)
 				throw new TError(new ImportError(path, sequence));
 			
@@ -29,8 +28,7 @@ public record SingleImportNode(String path, Sequence sequence) implements Node {
 			
 //			fileContext.getShell().addLibrary(library);
 			
-			return Value.NULL;
+			return Value.UNDEFINED;
 		} else throw new TError(new RuntimeError("Cannot import in inner context", sequence));
-		
 	}
 }
