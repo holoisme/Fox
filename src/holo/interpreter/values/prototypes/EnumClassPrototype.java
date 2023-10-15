@@ -3,8 +3,8 @@ package holo.interpreter.values.prototypes;
 import java.util.ArrayList;
 
 import holo.interpreter.values.objects.EnumClassValue;
-import holo.interpreter.values.primitives.IntegerValue;
 import holo.interpreter.values.primitives.ListValue;
+import holo.interpreter.values.primitives.numbers.IntegerValue;
 
 public class EnumClassPrototype {
 	

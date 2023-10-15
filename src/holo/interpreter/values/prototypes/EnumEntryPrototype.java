@@ -1,8 +1,8 @@
 package holo.interpreter.values.prototypes;
 
 import holo.interpreter.values.objects.EnumEntryValue;
-import holo.interpreter.values.primitives.IntegerValue;
 import holo.interpreter.values.primitives.StringValue;
+import holo.interpreter.values.primitives.numbers.IntegerValue;
 
 public class EnumEntryPrototype {
 	
