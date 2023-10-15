@@ -1,5 +1,6 @@
 package holo.interpreter.values.functions;
 
+import holo.errors.IncorrectNumberOfArguments;
 import holo.interpreter.Interpreter;
 import holo.interpreter.contexts.Context;
 import holo.interpreter.contexts.SimpleContext;
@@ -8,8 +9,11 @@ import holo.interpreter.nodes.ReflectionUtils;
 import holo.interpreter.nodes.helpers.args.NamedValue;
 import holo.interpreter.nodes.helpers.args.ObligatoryDefinitionArgument;
 import holo.interpreter.nodes.helpers.args.OptionalDefinitionArgument;
+import holo.interpreter.nodes.statements.ReturnNode;
+import holo.interpreter.transcendental.TError;
+import holo.interpreter.transcendental.TReturn;
 import holo.interpreter.values.Value;
-import holo.transcendental.TReturn;
+import holo.lang.lexer.Sequence;
 
 public class FunctionValue extends BaseFunctionValue {
 	
@@ -22,11 +26,15 @@ public class FunctionValue extends BaseFunctionValue {
 		this.body = body;
 	}
 
-	public Value callInside(Value host, Context insideContext, Interpreter interpreter, Value[] args, NamedValue[] optionalArguments) {
+	public Value callInside(Value host, Context insideContext, Interpreter interpreter, Sequence sequence, Value[] args, NamedValue[] optionalArguments) {
+		Context callContext = new SimpleContext("function", insideContext, true);
 		
-		Context callContext = new SimpleContext("function", insideContext);
+		if(!((args == null && regularArguments.length == 0) || (regularArguments.length == args.length)))
+			throw new TError(new IncorrectNumberOfArguments(regularArguments.length, args.length, "function", sequence));
+		
 		for(int i = 0; i < regularArguments.length; i++)
 			callContext.setToThis(regularArguments[i].name(), args[i]);
+		
 		if(this.optionalArguments != null && this.optionalArguments.length != 0)
 			upper:
 			for(OptionalDefinitionArgument opt:this.optionalArguments) {
@@ -47,32 +55,16 @@ public class FunctionValue extends BaseFunctionValue {
 			return t.value();
 		}
 		
-		return Value.NULL;
+		return Value.UNDEFINED;
 	}
 	
-	public Value call(Value host, Context parentContext, Interpreter interpreter, Value[] args, NamedValue[] optionalArguments) {
-		return callInside(host, definingContext, interpreter, args, optionalArguments);
-//		RuntimeResult rt = new RuntimeResult();
-//		
-//		Context callContext = new SimpleContext("function", definingContext);
-//		for(int i = 0; i < definingArguments.length; i++)
-//			callContext.setToThis(definingArguments[i].name(), args[i]);
-//		
-//		rt.register(body.interpret(callContext, interpreter, rt), body.sequence());
-//		
-//		if(rt.hasError()) return rt;
-//		
-//		if(rt.hasReturnValue()) {
-//			Value returnedValue = rt.getReturnValue();
-//			rt.clearReturn();
-//			return rt.success(returnedValue);
-//		}
-//		
-//		return rt.success(Value.NULL);
+	@Override
+	public Value call(Value host, Context parentContext, Interpreter interpreter, Sequence sequence, Value[] args, NamedValue[] optionalArguments) {
+		return callInside(host, definingContext, interpreter, sequence, args, optionalArguments);
 	}
 	
 	public String toString() {
-		return "("+ReflectionUtils.toString(regularArguments)+") -> " + body;
+		return "("+ReflectionUtils.toString(regularArguments)+") -> " + (body instanceof ReturnNode n ? n.expression() : body);
 	}
 	
 	public Node getBody() {
