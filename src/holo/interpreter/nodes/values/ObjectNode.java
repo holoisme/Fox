@@ -19,9 +19,9 @@ public record ObjectNode(ObjectStatementSequence[] statements, Sequence sequence
 	}
 	
 	public Value interpret(Context parentContext, Interpreter interpreter) {
-		Map<String, Value> map = new HashMap<>();
+		final Map<String, Value> map = new HashMap<>();
 		
-		ObjectValue objectValue = new ObjectValue(map, parentContext);
+		final ObjectValue objectValue = new ObjectValue(map, parentContext);
 		
 		for(ObjectStatementSequence objectStatement: statements)
 			map.put(objectStatement.name(), objectStatement.expression().interpret(objectValue, interpreter));
