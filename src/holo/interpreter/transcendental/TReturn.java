@@ -1,4 +1,4 @@
-package holo.transcendental;
+package holo.interpreter.transcendental;
 
 import holo.interpreter.values.Value;
 
