@@ -7,7 +7,11 @@ import holo.lang.lexer.Sequence;
 
 public interface Node {
 	
-	public Sequence sequence();
-	public Value interpret(Context parentContext, Interpreter interpreter);
+	Sequence sequence();
+	Value interpret(Context parentContext, Interpreter interpreter);
+	
+	public default Sequence join(Node node) {
+		return sequence().join(node == null ? null : node.sequence());
+	}
 	
 }
